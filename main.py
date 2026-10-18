@@ -12,6 +12,5 @@ def main():
         if not menu.select(choice):
             break
 
-
 if __name__ == "__main__":
     main()

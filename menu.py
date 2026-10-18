@@ -1,11 +1,8 @@
 import json
 from pathlib import Path
-
 import actions
 
-
 FILE_PATH = Path(__file__).with_name("menu.json")
-
 
 def menu_data_init():
     try:
@@ -15,9 +12,7 @@ def menu_data_init():
         print(f"Cannot read menu: {error}")
         return None
 
-
 MENU_DATA = menu_data_init()
-
 
 def menu_print():
     if MENU_DATA is None:
