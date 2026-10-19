@@ -1,26 +1,21 @@
 # MovieShelf
 
-A small command-line movie collection built with Python. MovieShelf is a place to keep track of the films you love and a hands-on project for learning how to organize a Python application, work with JSON, and build an interactive menu.
+A personal movie library, from a Python console project to a desktop collection and review journal.
 
-## Project structure
+![MovieShelf desktop](docs/desktop.png)
 
-```text
-MovieShelf/
-├── main.py       # Runs the input loop
-├── menu.py       # Loads the menu and dispatches choices
-├── menu.json     # Menu labels and action names
-├── actions.py    # Reads, saves, and displays movies
-└── movies.json   # The movie collection
+| Project | Description |
+| --- | --- |
+| [Desktop](desktop/README.md) | PySide6 interface, posters with adjustable framing, descriptions, reviews, ratings and collections. |
+| [Console](console/README.md) | The original command-line project, preserved with its own data. |
+
+## Launch the desktop app
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r desktop/requirements.txt
+.\.venv\Scripts\python.exe desktop/main.py
 ```
 
-## Movie data
+If `.venv` does not exist yet, create it with `python -m venv .venv`.
 
-Each movie can use this format:
-
-```json
-{
-  "id": 1,
-  "title": "Interstellar",
-  "year": 2014
-}
-```
+Your current movie collection and poster images live in `desktop/movies.json` and `desktop/posters/`. Both versions work independently.

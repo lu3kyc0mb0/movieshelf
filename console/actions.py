@@ -15,7 +15,8 @@ def load_movies():
 
     if not isinstance(movies, list):
         print("movies.json must contain a list of movies.")
-        return None    return movies
+        return None
+    return movies
 
 
 def save_movies(movies):

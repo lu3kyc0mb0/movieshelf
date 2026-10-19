@@ -1,0 +1,35 @@
+{
+    "label":"Main Menu",
+    "actions":[
+        {
+            "id":"1",
+            "name":"List of Movies",
+            "action":"get_list"
+        },
+        {
+            "id":"2",
+            "name":"Add to list",
+            "action":"add_to_list"
+        },
+        {
+            "id":"3",
+            "name":"Remove from list",
+            "action":"remove_from_list"
+        },
+        {
+            "id":"4",
+            "name":"Edit from list",
+            "action":"edit_from_list"
+        },
+        {
+            "id":"5",
+            "name":"Search in list",
+            "action":"search_in_list"
+        },
+        {
+            "id":"6",
+            "name":"Exit",
+            "action":"exit"
+        }
+    ]
+}
