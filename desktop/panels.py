@@ -13,7 +13,6 @@ from editor import label
 from motion import fade_in
 from posters import PosterView
 
-
 class MoviePreview(QDialog):
     def __init__(self, parent, movie):
         super().__init__(parent)
@@ -58,7 +57,6 @@ class MoviePreview(QDialog):
         super().showEvent(event)
         fade_in(self)
 
-
 def search_icon():
     pixmap = QPixmap(48, 48)
     pixmap.fill(Qt.GlobalColor.transparent)
@@ -69,7 +67,6 @@ def search_icon():
     painter.drawLine(28, 28, 39, 39)
     painter.end()
     return QIcon(pixmap)
-
 
 class SearchDialog(QDialog):
     def __init__(self, parent, movies, query=""):
@@ -126,7 +123,6 @@ class SearchDialog(QDialog):
         super().showEvent(event)
         self.input.setFocus()
         fade_in(self)
-
 
 class SettingsDialog(QDialog):
     def __init__(self, parent, card_size):

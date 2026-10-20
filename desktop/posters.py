@@ -14,10 +14,8 @@ def _read_image(filename, modified):
         reader.setScaledSize(size)
     return QPixmap.fromImage(reader.read())
 
-
 @lru_cache(maxsize=32)
 def _scaled_image(filename, modified, width, height):
-    # Pre-filter minification rather than relying on the painter's bilinear sampling.
     original = _read_image(filename, modified)
     return QPixmap.fromImage(original.toImage().scaled(
         width, height, Qt.AspectRatioMode.IgnoreAspectRatio,

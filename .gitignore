@@ -222,3 +222,12 @@ __marimo__/
 movies.json
 desktop/settings.json
 desktop/settings.tmp
+desktop/release/
+desktop/deployment/
+desktop/MovieShelf.dist/
+desktop/MovieShelf.exe
+!desktop/pysidedeploy.spec
+
+desktop/posters/
+
+ignore files/

@@ -1,6 +1,7 @@
 import sys
+from pathlib import Path
 from PySide6.QtCore import Qt, QTimer, QSize
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QDialog, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QMainWindow, QMessageBox, QPushButton, QScrollArea,
@@ -334,6 +335,7 @@ class MovieShelf(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("MovieShelf")
+    app.setWindowIcon(QIcon(str(Path(__file__).resolve().parent / "assets" / "icon-preview.png")))
     apply_theme(app)
     window = MovieShelf()
     window.show()

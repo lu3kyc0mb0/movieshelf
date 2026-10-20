@@ -2,7 +2,6 @@ from PySide6.QtCore import QEasingCurve, QPropertyAnimation
 from PySide6.QtWidgets import QGraphicsOpacityEffect
 import preferences
 
-
 def fade_in(widget):
     if not preferences.load()["animations"]:
         return

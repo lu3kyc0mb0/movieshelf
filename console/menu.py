@@ -21,7 +21,6 @@ def menu_print():
     for item in MENU_DATA["actions"]:
         print(f"{item['id']}. {item['name']}")
 
-
 def select(number: str) -> bool:
     if MENU_DATA is None:
         return False

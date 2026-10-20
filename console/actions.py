@@ -18,7 +18,6 @@ def load_movies():
         return None
     return movies
 
-
 def save_movies(movies):
     with FILE_PATH.open("w", encoding="utf-8") as file:
         json.dump(movies, file, ensure_ascii=False, indent=2)

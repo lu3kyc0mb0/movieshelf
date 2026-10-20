@@ -5,11 +5,13 @@ import sys
 import uuid
 from pathlib import Path
 
-BASE_DIR = (
-    Path(sys.executable).resolve().parent
-    if getattr(sys, "frozen", False) or "__compiled__" in globals()
-    else Path(__file__).resolve().parent
-)
+compiled = globals().get("__compiled__")
+if compiled is not None:
+    BASE_DIR = Path(compiled.containing_dir).resolve()
+elif getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent
 MOVIES_FILE = BASE_DIR / "movies.json"
 POSTERS_DIR = BASE_DIR / "posters"
 
@@ -130,7 +132,6 @@ def delete_movie(movie_id):
     return movie
 
 def save_movie(fields, movie_id=None, poster_source=None, remove_poster=False):
-    """Commit the whole editor draft in one atomic write."""
     title = fields.get("title", "").strip()
     if not title:
         raise ValueError("Please enter a movie title.")
