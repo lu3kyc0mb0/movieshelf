@@ -31,7 +31,7 @@ python -m venv .venv
 `theme.py` the visual style,
 `movie_store.py` persistence.
 
-The existing `movies.json` and `posters/` are kept together in this folder. Keep both when moving or backing up your collection.
+Your collection uses `movies.json`, `posters/`, and `movie_id_counter.json` after the first new film is added. Keep all three when moving or backing up your collection. `movies.json.lock` is created automatically to coordinate simultaneous app sessions.
 
 ## Shortcuts
 

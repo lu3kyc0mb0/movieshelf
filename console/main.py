@@ -1,6 +1,8 @@
 import menu
 
 def main():
+    if menu.MENU_DATA is None:
+        return
     while True:
         menu.menu_print()
         try:
@@ -9,7 +11,11 @@ def main():
             print("\nGoodbye!")
             break
 
-        if not menu.select(choice):
+        try:
+            if not menu.select(choice):
+                break
+        except (EOFError, KeyboardInterrupt):
+            print("\nGoodbye!")
             break
 
 if __name__ == "__main__":

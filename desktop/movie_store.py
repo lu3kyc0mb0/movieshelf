@@ -2,7 +2,9 @@ import json
 import os
 import shutil
 import sys
+import tempfile
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 
 compiled = globals().get("__compiled__")
@@ -14,32 +16,105 @@ else:
     BASE_DIR = Path(__file__).resolve().parent
 MOVIES_FILE = BASE_DIR / "movies.json"
 POSTERS_DIR = BASE_DIR / "posters"
+COUNTER_FILE = BASE_DIR / "movie_id_counter.json"
+LOCK_FILE = BASE_DIR / "movies.json.lock"
+
+def _atomic_write(path, contents):
+    descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as file:
+            file.write(contents)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+@contextmanager
+def _collection_lock():
+    with LOCK_FILE.open("a+b") as lock:
+        lock.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            lock.seek(0)
+            if os.name == "nt":
+                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+def _validate_movie(movie, index, seen):
+    if not isinstance(movie, dict):
+        raise ValueError(f"Movie #{index} must be an object.")
+    movie_id = movie.get("id")
+    if type(movie_id) is not int or movie_id < 1 or movie_id in seen:
+        raise ValueError(f"Movie #{index} has an invalid or duplicate ID.")
+    seen.add(movie_id)
+    if not isinstance(movie.get("title"), str) or not movie["title"].strip():
+        raise ValueError(f"Movie #{index} needs a nonempty title.")
+    year = movie.get("year")
+    if type(year) is not int or not 1888 <= year <= 2100:
+        raise ValueError(f"Movie #{index} has an invalid release year.")
+    if "rating" in movie and (type(movie["rating"]) is not int or not 0 <= movie["rating"] <= 10):
+        raise ValueError(f"Movie #{index} has an invalid rating.")
+    for key in ("description", "review", "poster"):
+        if key in movie and not isinstance(movie[key], str):
+            raise ValueError(f"Movie #{index} has an invalid {key}.")
+    if "favorite" in movie and type(movie["favorite"]) is not bool:
+        raise ValueError(f"Movie #{index} has an invalid favorite flag.")
+    if "status" in movie and movie["status"] not in ("watchlist", "watched"):
+        raise ValueError(f"Movie #{index} has an invalid status.")
+    if "poster" in movie and ("\0" in movie["poster"] or Path(movie["poster"]).is_absolute()):
+        raise ValueError(f"Movie #{index} has an invalid poster path.")
+    if "poster_crop" in movie:
+        crop = movie["poster_crop"]
+        if not isinstance(crop, dict) or crop.get("mode") not in ("fit", "fill"):
+            raise ValueError(f"Movie #{index} has invalid poster framing.")
+        for key, minimum, maximum in (("zoom", 1, 3), ("x", -1, 1), ("y", -1, 1)):
+            value = crop.get(key)
+            if type(value) not in (int, float) or not minimum <= value <= maximum:
+                raise ValueError(f"Movie #{index} has invalid poster framing.")
 
 def load_movies():
-    if not MOVIES_FILE.exists():
-        return []
     try:
         with MOVIES_FILE.open("r", encoding="utf-8") as file:
             movies = json.load(file)
-    except (OSError, json.JSONDecodeError) as error:
+    except FileNotFoundError:
+        return []
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise ValueError(f"Could not read movies.json: {error}") from error
     if not isinstance(movies, list):
         raise ValueError("movies.json must contain a list of movies.")
-    for movie in movies:
-        if not isinstance(movie, dict) or not all(key in movie for key in ("id", "title", "year")):
-            raise ValueError("Each movie needs an id, title and year.")
+    seen = set()
+    for index, movie in enumerate(movies, 1):
+        _validate_movie(movie, index, seen)
     return movies
 
 def save_movies(movies):
-    temporary = MOVIES_FILE.with_suffix(".json.tmp")
+    _atomic_write(MOVIES_FILE, json.dumps(movies, ensure_ascii=False, indent=2) + "\n")
+
+def _current_id_counter(movies):
     try:
-        with temporary.open("w", encoding="utf-8") as file:
-            json.dump(movies, file, ensure_ascii=False, indent=2)
-            file.write("\n")
-        os.replace(temporary, MOVIES_FILE)
-    except OSError:
-        temporary.unlink(missing_ok=True)
-        raise
+        value = json.loads(COUNTER_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        value = {"last_id": 0}
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"Could not read movie ID counter: {error}") from error
+    if not isinstance(value, dict) or type(value.get("last_id")) is not int or value["last_id"] < 0:
+        raise ValueError("Movie ID counter is invalid.")
+    return max([value["last_id"], *(movie["id"] for movie in movies)])
+
+def _next_id(movies):
+    movie_id = _current_id_counter(movies) + 1
+    _atomic_write(COUNTER_FILE, json.dumps({"last_id": movie_id}) + "\n")
+    return movie_id
 
 def find_movie(movies, movie_id):
     return next((movie for movie in movies if movie["id"] == movie_id), None)
@@ -70,8 +145,26 @@ def copy_poster(source):
     source = Path(source)
     POSTERS_DIR.mkdir(exist_ok=True)
     destination = POSTERS_DIR / f"{uuid.uuid4().hex}{source.suffix.lower()}"
-    shutil.copy2(source, destination)
+    descriptor, name = tempfile.mkstemp(prefix=".poster.", suffix=".tmp", dir=POSTERS_DIR)
+    os.close(descriptor)
+    temporary = Path(name)
+    try:
+        shutil.copy2(source, temporary)
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
     return destination.relative_to(BASE_DIR).as_posix()
+
+def _validated_fields(title, year):
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError("Please enter a movie title.")
+    try:
+        year = int(year)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("Please enter a valid release year.") from error
+    if not 1888 <= year <= 2100:
+        raise ValueError("Please enter a release year between 1888 and 2100.")
+    return title.strip(), year
 
 def _remove_unused_poster(relative, movies):
     if not relative or any(movie.get("poster") == relative for movie in movies):
@@ -84,84 +177,92 @@ def _remove_unused_poster(relative, movies):
             pass
 
 def add_movie(title, year, poster_source=None):
-    movies = load_movies()
-    movie_id = max((int(movie["id"]) for movie in movies), default=0) + 1
-    movie = {"id": movie_id, "title": title.strip(), "year": int(year)}
-    copied = copy_poster(poster_source) if poster_source else None
-    if copied:
-        movie["poster"] = copied
-    movies.append(movie)
-    try:
-        save_movies(movies)
-    except OSError:
-        _remove_unused_poster(copied, [])
-        raise
-    return movie
+    title, year = _validated_fields(title, year)
+    with _collection_lock():
+        movies = load_movies()
+        movie = {"id": _next_id(movies), "title": title, "year": year}
+        copied = copy_poster(poster_source) if poster_source else None
+        if copied:
+            movie["poster"] = copied
+        movies.append(movie)
+        try:
+            save_movies(movies)
+        except OSError:
+            _remove_unused_poster(copied, [])
+            raise
+        return movie
 
 def update_movie(movie_id, title, year, poster_source=None, remove_poster=False):
-    movies = load_movies()
-    movie = find_movie(movies, movie_id)
-    if movie is None:
-        raise ValueError(f"Movie #{movie_id} was not found.")
-    old_poster = movie.get("poster")
-    movie["title"] = title.strip()
-    movie["year"] = int(year)
-    copied = None
-    if remove_poster:
-        movie.pop("poster", None)
-    elif poster_source:
-        copied = copy_poster(poster_source)
-        movie["poster"] = copied
-    try:
-        save_movies(movies)
-    except OSError:
-        _remove_unused_poster(copied, [])
-        raise
-    if remove_poster or copied:
-        _remove_unused_poster(old_poster, movies)
-    return movie
+    title, year = _validated_fields(title, year)
+    with _collection_lock():
+        movies = load_movies()
+        existing = find_movie(movies, movie_id)
+        if existing is None:
+            raise ValueError(f"Movie #{movie_id} was not found.")
+        movie = dict(existing, title=title, year=year)
+        old_poster = movie.get("poster")
+        copied = None
+        if remove_poster:
+            movie.pop("poster", None)
+        elif poster_source:
+            copied = copy_poster(poster_source)
+            movie["poster"] = copied
+        movies[movies.index(existing)] = movie
+        try:
+            save_movies(movies)
+        except OSError:
+            _remove_unused_poster(copied, [])
+            raise
+        if remove_poster or copied:
+            _remove_unused_poster(old_poster, movies)
+        return movie
 
 def delete_movie(movie_id):
-    movies = load_movies()
-    movie = find_movie(movies, movie_id)
-    if movie is None:
-        raise ValueError(f"Movie #{movie_id} was not found.")
-    movies.remove(movie)
-    save_movies(movies)
-    _remove_unused_poster(movie.get("poster"), movies)
-    return movie
+    with _collection_lock():
+        movies = load_movies()
+        movie = find_movie(movies, movie_id)
+        if movie is None:
+            raise ValueError(f"Movie #{movie_id} was not found.")
+        highest = _current_id_counter(movies)
+        _atomic_write(COUNTER_FILE, json.dumps({"last_id": highest}) + "\n")
+        movies.remove(movie)
+        save_movies(movies)
+        _remove_unused_poster(movie.get("poster"), movies)
+        return movie
 
 def save_movie(fields, movie_id=None, poster_source=None, remove_poster=False):
-    title = fields.get("title", "").strip()
-    if not title:
-        raise ValueError("Please enter a movie title.")
-    year = int(fields["year"])
-    rating = int(fields.get("rating", 0))
-    if not 1888 <= year <= 2100 or not 0 <= rating <= 10:
-        raise ValueError("Check the release year and rating (1–10, or unrated).")
-    movies = load_movies()
-    existing = find_movie(movies, movie_id) if movie_id is not None else None
-    if movie_id is not None and existing is None:
-        raise ValueError("This movie no longer exists.")
-    movie = dict(existing) if existing else {"id": max((int(m["id"]) for m in movies), default=0) + 1}
-    old_poster = movie.get("poster")
-    movie.update(fields)
-    movie.update(title=title, year=year, rating=rating)
-    copied = None
-    if remove_poster:
-        movie.pop("poster", None)
-    elif poster_source:
-        copied = copy_poster(poster_source)
-        movie["poster"] = copied
-    if existing is not None:
-        movies[movies.index(existing)] = movie
-    else:
-        movies.append(movie)
+    title, year = _validated_fields(fields.get("title"), fields.get("year"))
     try:
-        save_movies(movies)
-    except OSError:
-        _remove_unused_poster(copied, [])
-        raise
-    if copied or remove_poster:
-        _remove_unused_poster(old_poster, movies)
-    return movie
+        rating = int(fields.get("rating", 0))
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("Please enter a valid rating.") from error
+    if not 0 <= rating <= 10:
+        raise ValueError("Check the rating (1–10, or unrated).")
+    with _collection_lock():
+        movies = load_movies()
+        existing = find_movie(movies, movie_id) if movie_id is not None else None
+        if movie_id is not None and existing is None:
+            raise ValueError("This movie no longer exists.")
+        movie = dict(existing) if existing else {"id": _next_id(movies)}
+        old_poster = movie.get("poster")
+        movie.update({key: fields[key] for key in ("description", "review", "status", "favorite", "poster_crop") if key in fields})
+        movie.update(title=title, year=year, rating=rating)
+        _validate_movie(movie, 1, set())
+        copied = None
+        if remove_poster:
+            movie.pop("poster", None)
+        elif poster_source:
+            copied = copy_poster(poster_source)
+            movie["poster"] = copied
+        if existing is not None:
+            movies[movies.index(existing)] = movie
+        else:
+            movies.append(movie)
+        try:
+            save_movies(movies)
+        except OSError:
+            _remove_unused_poster(copied, [])
+            raise
+        if copied or remove_poster:
+            _remove_unused_poster(old_poster, movies)
+        return movie

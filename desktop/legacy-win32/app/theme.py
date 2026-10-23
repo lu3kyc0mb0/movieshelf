@@ -48,7 +48,7 @@ QToolTip { background: #ffffff; color: #333740; border: 1px solid #dcdfe5; paddi
 """
 
 def apply_theme(app, mode=None):
-    dark = (mode or preferences.load()["theme"]) == "dark"
+    dark = (mode or preferences.DEFAULTS["theme"]) == "dark"
     families = QFontDatabase().families()
     family = next((name for name in ("SF Pro Text", ".AppleSystemUIFont", "Segoe UI Variable", "Segoe UI", "Arial") if name in families), app.font().family())
     app.setFont(QFont(family, 10))

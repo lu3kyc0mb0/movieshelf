@@ -1,9 +1,8 @@
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation
-from PySide6.QtWidgets import QGraphicsOpacityEffect
-import preferences
+from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
 
 def fade_in(widget):
-    if not preferences.load()["animations"]:
+    if QApplication.instance().property("movieshelf_animations") is False:
         return
     effect = widget.graphicsEffect()
     if not isinstance(effect, QGraphicsOpacityEffect):

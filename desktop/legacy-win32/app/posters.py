@@ -4,17 +4,17 @@ from PySide2.QtCore import Qt, QRectF, QSize, Signal
 from PySide2.QtGui import QColor, QImageReader, QPainter, QPainterPath, QPixmap
 from PySide2.QtWidgets import QWidget
 
-@lru_cache(maxsize=64)
+@lru_cache(maxsize=12)
 def _read_image(filename, modified):
     reader = QImageReader(filename)
     reader.setAutoTransform(True)
     size = reader.size()
-    if size.width() > 4096 or size.height() > 4096:
-        size.scale(QSize(4096, 4096), Qt.KeepAspectRatio)
+    if size.width() > 2048 or size.height() > 2048:
+        size.scale(QSize(2048, 2048), Qt.KeepAspectRatio)
         reader.setScaledSize(size)
     return QPixmap.fromImage(reader.read())
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=16)
 def _scaled_image(filename, modified, width, height):
     original = _read_image(filename, modified)
     return QPixmap.fromImage(original.toImage().scaled(
@@ -39,9 +39,12 @@ class PosterView(QWidget):
         self.source = None
         if path:
             path = Path(path)
-            if path.is_file():
-                self.source = (str(path), path.stat().st_mtime_ns)
-                self.pixmap = _read_image(*self.source)
+            try:
+                if path.is_file():
+                    self.source = (str(path), path.stat().st_mtime_ns)
+                    self.pixmap = _read_image(*self.source)
+            except OSError:
+                self.source = None
         if crop is not None:
             self.crop.update(crop)
         self.update()
@@ -68,7 +71,7 @@ class PosterView(QWidget):
             rect = self.image_rect()
             dpr = self.devicePixelRatioF()
             width, height = max(1, round(rect.width()*dpr)), max(1, round(rect.height()*dpr))
-            limit = min(1, 4096/max(width, height))
+            limit = min(1, 2048/max(width, height))
             scaled = _scaled_image(*self.source, max(1, round(width*limit)), max(1, round(height*limit)))
             painter.drawPixmap(rect, scaled, QRectF(scaled.rect()))
         else:

@@ -57,12 +57,21 @@ class MovieShelf(QMainWindow):
         super().__init__()
         self.setWindowTitle("MovieShelf")
         self.resize(1220, 830)
-        self.setMinimumSize(820, 590)
+        self.setMinimumSize(620, 460)
         self.movies = []
         self.view = "Library"
         self.columns = 0
         self.ready = False
-        self.preferences = preferences.load()
+        try:
+            self.preferences = preferences.load()
+            self.preferences_error = None
+        except (ValueError, OSError) as error:
+            self.preferences = dict(preferences.DEFAULTS)
+            self.preferences_error = str(error)
+            QTimer.singleShot(0, lambda: QMessageBox.warning(self, "Settings could not be loaded", self.preferences_error + "\nYour settings file was left unchanged."))
+        QApplication.instance().setProperty("movieshelf_animations", self.preferences["animations"])
+        self._render_generation = 0
+        self._render_signature = None
         self.reflow = QTimer(self)
         self.reflow.setSingleShot(True)
         self.reflow.setInterval(80)
@@ -200,6 +209,7 @@ class MovieShelf(QMainWindow):
         self.collection_count.setText(f"{len(self.movies)} film{'s' if len(self.movies) != 1 else ''} · stored locally")
         for name, button in self.nav.items():
             button.setChecked(name == self.view)
+        self._render_signature = None
         self.render()
 
     def change_view(self, name):
@@ -230,6 +240,8 @@ class MovieShelf(QMainWindow):
         dialog = SettingsDialog(self, self.card_size.value())
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.preferences = dialog.values
+            self.preferences_error = None
+            QApplication.instance().setProperty("movieshelf_animations", self.preferences["animations"])
             apply_theme(QApplication.instance(), self.preferences["theme"])
             self.search_button.setIcon(search_icon())
             self.statistics.setVisible(self.preferences["show_statistics"])
@@ -261,6 +273,13 @@ class MovieShelf(QMainWindow):
     def render(self):
         if not self.ready:
             return
+        size = self.card_size.value()
+        columns = max(1, (self.scroll.viewport().width()-8+18)//(size+18))
+        signature = (self.view, self.search.text(), self.sort.currentIndex(), size, columns)
+        if signature == self._render_signature:
+            return
+        self._render_signature = signature
+        self._render_generation += 1
         while self.grid.count():
             item = self.grid.takeAt(0)
             if item.widget():
@@ -268,16 +287,10 @@ class MovieShelf(QMainWindow):
                 item.widget().deleteLater()
         results = self.filtered_movies()
         self.results_label.setText(f"{len(results)} film{'s' if len(results) != 1 else ''}")
-        size = self.card_size.value()
-        columns = max(1, (self.scroll.viewport().width()-8+18)//(size+18))
         self.columns = columns
-        for i, movie in enumerate(results):
-            card = MovieCard(movie, size, self.edit_movie)
-            if self.view == "My reviews":
-                excerpt = label(movie.get("review", "")[:160] or "No written review yet.", "subtitle")
-                excerpt.setWordWrap(True)
-                card.layout().addWidget(excerpt)
-            self.grid.addWidget(card, i//columns, i%columns)
+        self._pending_results = results
+        self._pending_index = 0
+        self._render_batch(self._render_generation)
         if not results:
             empty = QFrame()
             layout = QVBoxLayout(empty)
@@ -285,6 +298,23 @@ class MovieShelf(QMainWindow):
             layout.addWidget(label("A little room for your next discovery.", "section"))
             layout.addWidget(label("Try another search, or add a film to your collection.", "subtitle"))
             self.grid.addWidget(empty, 0, 0)
+
+    def _render_batch(self, generation):
+        if generation != self._render_generation:
+            return
+        end = min(self._pending_index + 24, len(self._pending_results))
+        for i in range(self._pending_index, end):
+            movie = self._pending_results[i]
+            size = self.card_size.value()
+            card = MovieCard(movie, size, self.edit_movie)
+            if self.view == "My reviews":
+                excerpt = label(movie.get("review", "")[:160] or "No written review yet.", "subtitle")
+                excerpt.setWordWrap(True)
+                card.layout().addWidget(excerpt)
+            self.grid.addWidget(card, i//self.columns, i%self.columns)
+        self._pending_index = end
+        if end < len(self._pending_results):
+            QTimer.singleShot(1, lambda: self._render_batch(generation))
 
     def edit_movie(self, movie=None):
         editor = MovieEditor(self, movie)
@@ -319,12 +349,19 @@ class MovieShelf(QMainWindow):
         editor.accept()
 
     def closeEvent(self, event):
-        values = preferences.load()
+        if self.preferences_error:
+            super().closeEvent(event)
+            return
+        values = dict(self.preferences)
         values["card_size"] = self.card_size.value()
         try:
             preferences.save(values)
         except OSError as error:
-            self.statusBar().showMessage(f"Could not save preferences: {error}")
+            choice = QMessageBox.question(self, "Could not save preferences", f"{error}\nClose without saving preferences?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+            if choice != QMessageBox.StandardButton.Yes:
+                event.ignore()
+                return
         super().closeEvent(event)
 
     def resizeEvent(self, event):
@@ -336,8 +373,8 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("MovieShelf")
     app.setWindowIcon(QIcon(str(Path(__file__).resolve().parent / "assets" / "icon-preview.png")))
-    apply_theme(app)
     window = MovieShelf()
+    apply_theme(app, window.preferences["theme"])
     window.show()
     return app.exec()
 

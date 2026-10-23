@@ -1,3 +1,5 @@
+import os
+import tempfile
 from pathlib import Path
 import zipfile
 from PySide6.QtCore import Qt, QSize
@@ -129,7 +131,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Settings · MovieShelf")
         self.resize(520, 420)
-        self.values = preferences.load()
+        self.values = dict(parent.preferences)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 26, 28, 24)
         layout.setSpacing(18)
@@ -181,13 +183,24 @@ class SettingsDialog(QDialog):
         if not filename:
             return
         try:
-            movies = store.load_movies()
-            with zipfile.ZipFile(filename, "w", zipfile.ZIP_DEFLATED) as archive:
-                import json
-                archive.writestr("movies.json", json.dumps(movies, ensure_ascii=False, indent=2))
-                paths = {store.poster_path(movie) for movie in movies} - {None}
-                for path in paths:
-                    archive.write(path, path.relative_to(store.BASE_DIR).as_posix())
+            target = Path(filename)
+            descriptor, name = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
+            os.close(descriptor)
+            temporary = Path(name)
+            try:
+                with store._collection_lock():
+                    movies = store.load_movies()
+                    with zipfile.ZipFile(temporary, "w", zipfile.ZIP_DEFLATED) as archive:
+                        import json
+                        archive.writestr("movies.json", json.dumps(movies, ensure_ascii=False, indent=2))
+                        if store.COUNTER_FILE.is_file():
+                            archive.write(store.COUNTER_FILE, store.COUNTER_FILE.name)
+                        paths = {store.poster_path(movie) for movie in movies} - {None}
+                        for path in paths:
+                            archive.write(path, path.relative_to(store.BASE_DIR).as_posix())
+                os.replace(temporary, target)
+            finally:
+                temporary.unlink(missing_ok=True)
             QMessageBox.information(self, "Backup ready", "Your films, reviews and posters have been exported.")
         except (OSError, ValueError) as error:
             QMessageBox.warning(self, "Cannot export backup", str(error))

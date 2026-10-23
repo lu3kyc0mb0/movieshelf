@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, QDate
 from PySide6.QtGui import QImageReader, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout,
-    QLabel, QLineEdit, QMessageBox, QPushButton, QSlider, QSpinBox,
+    QLabel, QLineEdit, QMessageBox, QPushButton, QScrollArea, QSlider, QSpinBox,
     QTabWidget, QTextEdit, QVBoxLayout, QWidget,
 )
 import movie_store as store
@@ -26,7 +26,7 @@ class MovieEditor(QDialog):
         self.remove_poster = False
         self.setWindowTitle("Movie details · MovieShelf")
         self.resize(800, 670)
-        self.setMinimumSize(740, 620)
+        self.setMinimumSize(500, 420)
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 24, 28, 22)
         root.setSpacing(16)
@@ -129,7 +129,11 @@ class MovieEditor(QDialog):
         controls.addWidget(remove)
         controls.addStretch()
         art.addLayout(controls, 1)
-        self.tabs.addTab(artwork, "Poster studio")
+        artwork_scroll = QScrollArea()
+        artwork_scroll.setWidgetResizable(True)
+        artwork.setMinimumWidth(580)
+        artwork_scroll.setWidget(artwork)
+        self.tabs.addTab(artwork_scroll, "Poster studio")
 
         footer = QHBoxLayout()
         self.save_status = label("", "subtitle")
@@ -183,8 +187,11 @@ class MovieEditor(QDialog):
         if not QImageReader(path).canRead():
             QMessageBox.warning(self, "Cannot open image", "Choose a valid image file.")
             return
+        previous_path = self.poster.source[0] if self.poster.source else None
+        previous_crop = dict(self.poster.crop)
         self.poster.set_image(path)
         if self.poster.pixmap.isNull():
+            self.poster.set_image(previous_path, previous_crop)
             QMessageBox.warning(self, "Cannot open image", "This image could not be decoded.")
             return
         self.poster_source = path
