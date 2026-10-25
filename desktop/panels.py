@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
-    QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
+    QHBoxLayout, QInputDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
     QPushButton, QSlider, QVBoxLayout, QScrollArea, QWidget,
 )
 import movie_store as store
@@ -14,11 +14,12 @@ import preferences
 from editor import label
 from motion import fade_in
 from posters import PosterView
+from i18n import t
 
 class MoviePreview(QDialog):
     def __init__(self, parent, movie):
         super().__init__(parent)
-        self.setWindowTitle("Saved movie · MovieShelf")
+        self.setWindowTitle(t("Saved movie") + " · MovieShelf")
         self.resize(800, 600)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 28, 28, 24)
@@ -33,12 +34,17 @@ class MoviePreview(QDialog):
         title.setWordWrap(True)
         text.addWidget(title)
         text.addWidget(label(f"{movie['year']}  ·  ID #{movie['id']}", "subtitle"))
-        text.addWidget(label(f"{movie['rating']}/10" if movie.get("rating") else "Not rated", "rating"))
-        text.addWidget(label("Watched" if movie.get("status") == "watched" else "Want to watch", "subtitle"))
+        text.addWidget(label(f"{movie['rating']}/10" if movie.get("rating") else t("Not rated"), "rating"))
+        text.addWidget(label(t("Watched" if movie.get("status") == "watched" else "Want to watch"), "subtitle"))
+        names = {item["id"]: item["name"] for item in getattr(parent, "collections", [])}
+        for caption, values in (("Genres", movie.get("genres", [])), ("Tags", movie.get("tags", [])),
+                                ("Collections", [names[item] for item in movie.get("collections", []) if item in names])):
+            if values:
+                text.addWidget(label(f"{t(caption)}: {', '.join(values)}", "subtitle"))
         for caption, key in (("Description", "description"), ("My review", "review")):
             if movie.get(key):
                 text.addSpacing(14)
-                text.addWidget(label(caption, "section"))
+                text.addWidget(label(t(caption), "section"))
                 paragraph = label(movie[key])
                 paragraph.setTextFormat(Qt.TextFormat.PlainText)
                 paragraph.setWordWrap(True)
@@ -50,7 +56,7 @@ class MoviePreview(QDialog):
         scroll.setWidget(content)
         body.addWidget(scroll, 1)
         layout.addLayout(body, 1)
-        done = QPushButton("Done")
+        done = QPushButton(t("Done"))
         done.setObjectName("primary")
         done.clicked.connect(self.accept)
         layout.addWidget(done, alignment=Qt.AlignmentFlag.AlignRight)
@@ -75,14 +81,14 @@ class SearchDialog(QDialog):
         super().__init__(parent)
         self.movies = movies
         self.selected_movie = None
-        self.setWindowTitle("Search · MovieShelf")
+        self.setWindowTitle(t("Search") + " · MovieShelf")
         self.resize(720, 480)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
         self.input = QLineEdit(query)
         self.input.setObjectName("bigSearch")
-        self.input.setPlaceholderText("Search your collection…")
+        self.input.setPlaceholderText(t("Search your collection…"))
         self.input.setClearButtonEnabled(True)
         layout.addWidget(self.input)
         self.count = label("", "subtitle")
@@ -95,7 +101,7 @@ class SearchDialog(QDialog):
         self.results.itemActivated.connect(self.open_selected)
         buttons = QHBoxLayout()
         buttons.addStretch()
-        show = QPushButton("Show results in library")
+        show = QPushButton(t("Show results in library"))
         show.setObjectName("primary")
         show.clicked.connect(self.accept)
         buttons.addWidget(show)
@@ -107,11 +113,12 @@ class SearchDialog(QDialog):
         self.results.clear()
         for movie in self.movies:
             text = " ".join(str(movie.get(key, "")) for key in ("title", "id", "year", "description", "review"))
+            text += " " + " ".join(movie.get("genres", []) + movie.get("tags", []))
             if query in text.casefold():
                 item = QListWidgetItem(f"{movie['title']}   ·   {movie['year']}   ·   #{movie['id']}")
                 item.setData(Qt.ItemDataRole.UserRole, movie)
                 self.results.addItem(item)
-        self.count.setText(f"{self.results.count()} results · Enter to open, Esc to close")
+        self.count.setText(f"{self.results.count()} {t('results')} · {t('Enter to open, Esc to close')}")
         if self.results.count():
             self.results.setCurrentRow(0)
 
@@ -126,60 +133,135 @@ class SearchDialog(QDialog):
         self.input.setFocus()
         fade_in(self)
 
+class CollectionManager(QDialog):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWindowTitle(t("Manage collections") + " · MovieShelf")
+        self.resize(470, 400)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.addWidget(label(t("Collections"), "title"))
+        self.items = QListWidget()
+        layout.addWidget(self.items, 1)
+        buttons = QHBoxLayout()
+        for title, handler in (("New collection", self.create), ("Rename", self.rename), ("Delete", self.delete)):
+            button = QPushButton(t(title))
+            button.clicked.connect(handler)
+            buttons.addWidget(button)
+        layout.addLayout(buttons)
+        self.refresh()
+
+    def refresh(self, selected_id=None):
+        self.items.clear()
+        for collection in store.load_collections():
+            item = QListWidgetItem(collection["name"])
+            item.setData(Qt.ItemDataRole.UserRole, collection["id"])
+            self.items.addItem(item)
+            if collection["id"] == selected_id:
+                self.items.setCurrentItem(item)
+
+    def selected(self):
+        item = self.items.currentItem()
+        return (item.data(Qt.ItemDataRole.UserRole), item.text()) if item else (None, None)
+
+    def create(self):
+        name, accepted = QInputDialog.getText(self, t("New collection"), t("Collection name"))
+        if not accepted:
+            return
+        try:
+            collection = store.create_collection(name)
+            self.refresh(collection["id"])
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, t("Could not change collection"), t(str(error)))
+
+    def rename(self):
+        collection_id, old_name = self.selected()
+        if collection_id is None:
+            return
+        name, accepted = QInputDialog.getText(self, t("Rename collection"), t("Collection name"), text=old_name)
+        if not accepted:
+            return
+        try:
+            store.rename_collection(collection_id, name)
+            self.refresh(collection_id)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, t("Could not change collection"), t(str(error)))
+
+    def delete(self):
+        collection_id, name = self.selected()
+        if collection_id is None:
+            return
+        answer = QMessageBox.question(self, t("Delete collection?"), t("Delete “{name}”? Films will stay in your library.", name=name),
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            store.delete_collection(collection_id)
+            self.refresh()
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, t("Could not change collection"), t(str(error)))
+
 class SettingsDialog(QDialog):
     def __init__(self, parent, card_size):
         super().__init__(parent)
-        self.setWindowTitle("Settings · MovieShelf")
+        self.setWindowTitle(t("Settings") + " · MovieShelf")
         self.resize(520, 420)
         self.values = dict(parent.preferences)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 26, 28, 24)
         layout.setSpacing(18)
-        layout.addWidget(label("Settings", "title"))
+        layout.addWidget(label(t("Settings"), "title"))
         form = QFormLayout()
         form.setVerticalSpacing(16)
         self.theme = QComboBox()
-        self.theme.addItems(["Dark", "Light"])
+        self.theme.addItem(t("Dark"), "dark")
+        self.theme.addItem(t("Light"), "light")
         self.theme.setCurrentIndex(0 if self.values["theme"] == "dark" else 1)
-        form.addRow("Appearance", self.theme)
-        self.motion = QCheckBox("Smooth transitions")
+        form.addRow(t("Appearance"), self.theme)
+        self.language = QComboBox()
+        self.language.addItem("English", "en")
+        self.language.addItem("Русский", "ru")
+        self.language.addItem("Қазақша", "kk")
+        self.language.setCurrentIndex(self.language.findData(self.values["language"]))
+        form.addRow(t("Language"), self.language)
+        self.motion = QCheckBox(t("Smooth transitions"))
         self.motion.setChecked(self.values["animations"])
-        form.addRow("Animations", self.motion)
-        self.stats = QCheckBox("Show collection statistics")
+        form.addRow(t("Animations"), self.motion)
+        self.stats = QCheckBox(t("Show collection statistics"))
         self.stats.setChecked(self.values["show_statistics"])
-        form.addRow("Library", self.stats)
+        form.addRow(t("Library"), self.stats)
         self.size = QSlider(Qt.Orientation.Horizontal)
         self.size.setRange(155, 245)
         self.size.setValue(card_size)
-        form.addRow("Poster size", self.size)
+        form.addRow(t("Poster size"), self.size)
         layout.addLayout(form)
-        backup = QPushButton("Export library backup…")
+        backup = QPushButton(t("Export library backup…"))
         backup.clicked.connect(self.backup)
         layout.addWidget(backup)
         layout.addStretch()
         buttons = QHBoxLayout()
         buttons.addStretch()
-        cancel = QPushButton("Cancel")
+        cancel = QPushButton(t("Cancel"))
         cancel.clicked.connect(self.reject)
         buttons.addWidget(cancel)
-        save = QPushButton("Save and apply")
+        save = QPushButton(t("Save and apply"))
         save.setObjectName("primary")
         save.clicked.connect(self.save)
         buttons.addWidget(save)
         layout.addLayout(buttons)
 
     def save(self):
-        self.values.update(theme=self.theme.currentText().lower(), animations=self.motion.isChecked(),
-                           show_statistics=self.stats.isChecked(), card_size=self.size.value())
+        self.values.update(theme=self.theme.currentData(), language=self.language.currentData(),
+                           animations=self.motion.isChecked(), show_statistics=self.stats.isChecked(), card_size=self.size.value())
         try:
             preferences.save(self.values)
         except OSError as error:
-            QMessageBox.warning(self, "Cannot save settings", str(error))
+            QMessageBox.warning(self, t("Cannot save settings"), str(error))
             return
         self.accept()
 
     def backup(self):
-        filename, _ = QFileDialog.getSaveFileName(self, "Export backup", "MovieShelf-backup.zip", "ZIP archive (*.zip)")
+        filename, _ = QFileDialog.getSaveFileName(self, t("Export backup"), "MovieShelf-backup.zip", "ZIP archive (*.zip)")
         if not filename:
             return
         try:
@@ -195,15 +277,17 @@ class SettingsDialog(QDialog):
                         archive.writestr("movies.json", json.dumps(movies, ensure_ascii=False, indent=2))
                         if store.COUNTER_FILE.is_file():
                             archive.write(store.COUNTER_FILE, store.COUNTER_FILE.name)
+                        if store.COLLECTIONS_FILE.is_file():
+                            archive.write(store.COLLECTIONS_FILE, store.COLLECTIONS_FILE.name)
                         paths = {store.poster_path(movie) for movie in movies} - {None}
                         for path in paths:
                             archive.write(path, path.relative_to(store.BASE_DIR).as_posix())
                 os.replace(temporary, target)
             finally:
                 temporary.unlink(missing_ok=True)
-            QMessageBox.information(self, "Backup ready", "Your films, reviews and posters have been exported.")
+            QMessageBox.information(self, t("Backup ready"), t("Your films, reviews and posters have been exported."))
         except (OSError, ValueError) as error:
-            QMessageBox.warning(self, "Cannot export backup", str(error))
+            QMessageBox.warning(self, t("Cannot export backup"), str(error))
 
     def showEvent(self, event):
         super().showEvent(event)

@@ -19,9 +19,14 @@ python -m venv .venv
 - **Watched:** completed films.
 - **Favorites:** personal favorites.
 - **My reviews:** films with a rating or written review.
-- Search titles, IDs, release years, descriptions and reviews.
+- Create and rename custom collections, then add any film to several collections.
+- Add genres and tags in the editor's Organization tab. Separate names with commas.
+- Search titles, IDs, release years, descriptions, reviews, genres and tags.
 - Sort by title, rating, year or most recently added ID.
+- Use Filters to combine year and rating ranges, watch status, favorites, genre, tag and custom collection.
 - Change the poster card size with the library slider.
+- Drop a local image onto the poster editor, adjust its crop, and preview it at three card sizes before saving.
+- Change the interface language in Settings: English, Russian or Kazakh. The choice is saved for the next launch.
 
 ## Files and data
 
@@ -31,7 +36,9 @@ python -m venv .venv
 `theme.py` the visual style,
 `movie_store.py` persistence.
 
-Your collection uses `movies.json`, `posters/`, and `movie_id_counter.json` after the first new film is added. Keep all three when moving or backing up your collection. `movies.json.lock` is created automatically to coordinate simultaneous app sessions.
+Your collection uses `movies.json`, `posters/`, `movie_id_counter.json`, and `collections.json` after you create a custom collection. Keep these files when moving your library. Settings → Export library backup includes the collection registry. `movies.json.lock` is created automatically to coordinate simultaneous app sessions.
+
+The new organization and localization features are in the PySide6 desktop source. Previously packaged executables and the separate `legacy-win32` PySide2 source do not include them until rebuilt or ported.
 
 ## Shortcuts
 

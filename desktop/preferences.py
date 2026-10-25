@@ -1,7 +1,7 @@
 import json
 import movie_store as store
 
-DEFAULTS = {"theme": "dark", "animations": True, "show_statistics": True, "card_size": 190}
+DEFAULTS = {"theme": "dark", "animations": True, "show_statistics": True, "card_size": 190, "language": "en"}
 
 def load():
     path = store.BASE_DIR / "settings.json"
@@ -22,6 +22,8 @@ def load():
             raise ValueError(f"settings.json has an invalid {key} value.")
     if type(result["card_size"]) is not int or not 155 <= result["card_size"] <= 245:
         raise ValueError("settings.json has an invalid card size.")
+    if result["language"] not in ("en", "ru", "kk"):
+        raise ValueError("settings.json has an invalid language.")
     return result
 
 def save(values):
