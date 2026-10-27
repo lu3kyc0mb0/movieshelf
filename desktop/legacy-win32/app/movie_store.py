@@ -18,6 +18,7 @@ MOVIES_FILE = BASE_DIR / "movies.json"
 POSTERS_DIR = BASE_DIR / "posters"
 COUNTER_FILE = BASE_DIR / "movie_id_counter.json"
 LOCK_FILE = BASE_DIR / "movies.json.lock"
+COLLECTIONS_FILE = BASE_DIR / "collections.json"
 
 def _atomic_write(path, contents):
     descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
@@ -81,6 +82,12 @@ def _validate_movie(movie, index, seen):
             value = crop.get(key)
             if type(value) not in (int, float) or not minimum <= value <= maximum:
                 raise ValueError(f"Movie #{index} has invalid poster framing.")
+    for key in ("genres", "tags", "collections"):
+        if key in movie:
+            values = movie[key]
+            if (not isinstance(values, list) or any(not isinstance(value, str) or not value.strip() for value in values)
+                    or len({value.casefold() for value in values}) != len(values)):
+                raise ValueError(f"Movie #{index} has invalid {key}.")
 
 def load_movies():
     try:
@@ -99,6 +106,73 @@ def load_movies():
 
 def save_movies(movies):
     _atomic_write(MOVIES_FILE, json.dumps(movies, ensure_ascii=False, indent=2) + "\n")
+
+def load_collections():
+    try:
+        collections = json.loads(COLLECTIONS_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"Could not read collections.json: {error}") from error
+    if not isinstance(collections, list):
+        raise ValueError("collections.json must contain a list.")
+    ids = set()
+    names = set()
+    for collection in collections:
+        if not isinstance(collection, dict):
+            raise ValueError("collections.json contains an invalid collection.")
+        collection_id = collection.get("id")
+        name = collection.get("name")
+        if (not isinstance(collection_id, str) or not collection_id.strip() or collection_id in ids
+                or not isinstance(name, str) or not name.strip() or name != name.strip() or len(name) > 60
+                or name.casefold() in names):
+            raise ValueError("collections.json contains an invalid or duplicate collection.")
+        ids.add(collection_id)
+        names.add(name.casefold())
+    return collections
+
+def _save_collections(collections):
+    _atomic_write(COLLECTIONS_FILE, json.dumps(collections, ensure_ascii=False, indent=2) + "\n")
+
+def create_collection(name):
+    if not isinstance(name, str):
+        raise ValueError("Collection name must be text.")
+    name = name.strip()
+    if not name or len(name) > 60:
+        raise ValueError("Collection names must be between 1 and 60 characters.")
+    with _collection_lock():
+        collections = load_collections()
+        if any(item["name"].casefold() == name.casefold() for item in collections):
+            raise ValueError("A collection with this name already exists.")
+        collection = {"id": uuid.uuid4().hex, "name": name}
+        collections.append(collection)
+        _save_collections(collections)
+        return collection
+
+def rename_collection(collection_id, name):
+    if not isinstance(name, str):
+        raise ValueError("Collection name must be text.")
+    name = name.strip()
+    if not name or len(name) > 60:
+        raise ValueError("Collection names must be between 1 and 60 characters.")
+    with _collection_lock():
+        collections = load_collections()
+        target = next((item for item in collections if item["id"] == collection_id), None)
+        if target is None:
+            raise ValueError("Collection was not found.")
+        if any(item["id"] != collection_id and item["name"].casefold() == name.casefold() for item in collections):
+            raise ValueError("A collection with this name already exists.")
+        target["name"] = name
+        _save_collections(collections)
+        return target
+
+def delete_collection(collection_id):
+    with _collection_lock():
+        collections = load_collections()
+        remaining = [item for item in collections if item["id"] != collection_id]
+        if len(remaining) == len(collections):
+            raise ValueError("Collection was not found.")
+        _save_collections(remaining)
 
 def _current_id_counter(movies):
     try:
@@ -245,9 +319,13 @@ def save_movie(fields, movie_id=None, poster_source=None, remove_poster=False):
             raise ValueError("This movie no longer exists.")
         movie = dict(existing) if existing else {"id": _next_id(movies)}
         old_poster = movie.get("poster")
-        movie.update({key: fields[key] for key in ("description", "review", "status", "favorite", "poster_crop") if key in fields})
+        movie.update({key: fields[key] for key in ("description", "review", "status", "favorite", "poster_crop", "genres", "tags", "collections") if key in fields})
         movie.update(title=title, year=year, rating=rating)
         _validate_movie(movie, 1, set())
+        if "collections" in fields:
+            known = {item["id"] for item in load_collections()}
+            if any(collection_id not in known for collection_id in movie["collections"]):
+                raise ValueError("A selected collection no longer exists.")
         copied = None
         if remove_poster:
             movie.pop("poster", None)

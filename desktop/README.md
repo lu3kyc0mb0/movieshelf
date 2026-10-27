@@ -38,8 +38,6 @@ python -m venv .venv
 
 Your collection uses `movies.json`, `posters/`, `movie_id_counter.json`, and `collections.json` after you create a custom collection. Keep these files when moving your library. Settings → Export library backup includes the collection registry. `movies.json.lock` is created automatically to coordinate simultaneous app sessions.
 
-The new organization and localization features are in the PySide6 desktop source. Previously packaged executables and the separate `legacy-win32` PySide2 source do not include them until rebuilt or ported.
-
 ## Shortcuts
 
 - `Ctrl+N`: add a film.

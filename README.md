@@ -18,4 +18,4 @@ A personal movie library, from a Python console project to a desktop collection 
 
 If `.venv` does not exist yet, create it with `python -m venv .venv`.
 
-Your desktop collection uses `desktop/movies.json`, `desktop/posters/`, and `desktop/movie_id_counter.json` after the first new film is added. Keep them together when moving the app. The desktop and console versions have separate collections.
+Your desktop collection uses `desktop/movies.json`, `desktop/posters/`, `desktop/movie_id_counter.json`, and `desktop/collections.json` if you create custom collections. Keep them together when moving the app. The desktop and console versions have separate collections.

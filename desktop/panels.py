@@ -249,6 +249,7 @@ class SettingsDialog(QDialog):
         save.clicked.connect(self.save)
         buttons.addWidget(save)
         layout.addLayout(buttons)
+        layout.addWidget(label(f"MovieShelf {QApplication.instance().applicationVersion()}", "subtitle"))
 
     def save(self):
         self.values.update(theme=self.theme.currentData(), language=self.language.currentData(),

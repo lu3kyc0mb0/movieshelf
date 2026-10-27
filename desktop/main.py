@@ -16,6 +16,8 @@ from motion import fade_in
 from panels import CollectionManager, SearchDialog, SettingsDialog, MoviePreview, search_icon
 from i18n import film_count, set_language, t
 
+APP_VERSION = "1.3.0"
+
 class MovieCard(QFrame):
     def __init__(self, movie, size, open_movie):
         super().__init__()
@@ -584,6 +586,7 @@ class MovieShelf(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("MovieShelf")
+    app.setApplicationVersion(APP_VERSION)
     app.setWindowIcon(QIcon(str(Path(__file__).resolve().parent / "assets" / "icon-preview.png")))
     window = MovieShelf()
     apply_theme(app, window.preferences["theme"])
