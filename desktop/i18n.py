@@ -2,6 +2,10 @@ _language = "en"
 
 TRANSLATIONS = {
     "ru": {
+        "Edit movie": "Редактировать фильм", "Discard": "Не сохранять",
+        "Something went wrong": "Не удалось выполнить действие",
+        "Create collections from the sidebar.": "Создайте коллекцию в боковой панели.",
+        "Choose a backup location outside the library files.": "Сохраните резервную копию отдельно от файлов библиотеки.",
         "COLLECTION": "КОЛЛЕКЦИЯ", "Library": "Библиотека", "Watchlist": "Хочу посмотреть",
         "Watched": "Просмотрено", "Favorites": "Избранное", "My reviews": "Мои рецензии",
         "Settings": "Настройки", "Search": "Поиск", "Search collection": "Поиск по коллекции",
@@ -82,6 +86,10 @@ TRANSLATIONS = {
         "NO ARTWORK\nAdd your own poster": "НЕТ ПОСТЕРА\nДобавьте свой постер",
     },
     "kk": {
+        "Edit movie": "Фильмді өңдеу", "Discard": "Сақтамау",
+        "Something went wrong": "Әрекетті орындау мүмкін болмады",
+        "Create collections from the sidebar.": "Бүйірлік панельден жинақ жасаңыз.",
+        "Choose a backup location outside the library files.": "Сақтық көшірмені кітапхана файлдарынан бөлек сақтаңыз.",
         "COLLECTION": "ЖИНАҚ", "Library": "Кітапхана", "Watchlist": "Көргім келеді",
         "Watched": "Көрілген", "Favorites": "Таңдаулылар", "My reviews": "Пікірлерім",
         "Settings": "Баптаулар", "Search": "Іздеу", "Search collection": "Жинақтан іздеу",
