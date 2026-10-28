@@ -67,6 +67,7 @@ Sheet {
                 }
                 Text { text: "This product uses the TMDB API but is not endorsed or certified by TMDB."; color: Theme.secondary; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                 ActionButton { text: "themoviedb.org"; quiet: true; onClicked: Qt.openUrlExternally("https://www.themoviedb.org") }
+                ActionButton { text: "Medeo Sans · SIL OFL 1.1"; quiet: true; onClicked: Qt.openUrlExternally("https://github.com/DNFDEVS/medeo-font") }
             }
         }
         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }

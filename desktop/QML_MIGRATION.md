@@ -4,7 +4,7 @@ MovieShelf keeps its Python application logic and uses Qt Quick/QML for the inte
 
 ## How the pieces connect
 
-1. `main.py` starts Qt, selects an installed UI font, loads `qml/Main.qml`, and exposes a `ShelfBackend` object to QML under the name `shelf`.
+1. `main.py` starts Qt, registers the bundled Medeo Sans TTF files with `QFontDatabase`, loads `qml/Main.qml`, and exposes a `ShelfBackend` object to QML under the name `shelf`. A system font is used only if the bundled files cannot be loaded.
 2. `qml_backend.py` reads the library through `movie_store.py`. Its `MovieModel` exposes each visible movie to the gallery. The backend applies navigation, search, filters and sorting before updating that model.
 3. QML screens call backend methods when the user edits or saves something. Qt signals notify the screens when data changes, so titles, statistics, posters and translated labels update together.
 4. `movie_store.py` remains responsible for validation, file locking, atomic writes, permanent IDs and poster copies. QML does not write JSON files directly.

@@ -10,6 +10,14 @@ from qml_backend import ShelfBackend
 
 APP_VERSION = "1.3.0"
 RESOURCE_DIR = Path(__file__).resolve().parent
+FONT_DIR = RESOURCE_DIR / "assets" / "fonts" / "medeo"
+
+def load_ui_font():
+    for name in ("MedeoSans-Regular.ttf", "MedeoSans-Medium.ttf", "MedeoSans-SemiBold.ttf", "MedeoSans-Bold.ttf"):
+        font_id = QFontDatabase.addApplicationFont(str(FONT_DIR / name))
+        if font_id < 0 or "Medeo Sans" not in QFontDatabase.applicationFontFamilies(font_id):
+            return None
+    return "Medeo Sans"
 
 def create_engine(backend):
     engine = QQmlApplicationEngine()
@@ -28,8 +36,10 @@ def main():
     app.setApplicationVersion(APP_VERSION)
     app.setWindowIcon(QIcon(str(RESOURCE_DIR / "assets" / "icon.ico")))
     QQuickStyle.setStyle("Basic")
-    families = QFontDatabase.families()
-    family = next((name for name in ("SF Pro Text", "SF Pro Display", "Segoe UI Variable", "Segoe UI", "Noto Sans") if name in families), app.font().family())
+    family = load_ui_font()
+    if family is None:
+        families = QFontDatabase.families()
+        family = next((name for name in ("Segoe UI Variable", "Segoe UI", "Noto Sans") if name in families), app.font().family())
     font = QFont(family)
     font.setPixelSize(14)
     app.setFont(font)

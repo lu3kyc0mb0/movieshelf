@@ -35,11 +35,13 @@ python -m venv .venv
 - Click a poster to open its details, then choose **Edit movie**. **Save** applies changes without leaving the editor; **Save & view** opens the saved movie.
 - The editor checks for unsaved changes when closing it or the application.
 - Search opens from the magnifying glass or `Ctrl+F`; press Enter to show matching films in Library.
-- Font selection uses an installed SF Pro font when available, then Segoe UI Variable, Segoe UI or Noto Sans. No Apple fonts are bundled.
+- The interface uses bundled Medeo Sans, so users do not need to install a font. If its files are missing, MovieShelf falls back to an available system font.
 
 ## Files and data
 
 `main.py` starts the QML application. `qml/` contains the screens and reusable visual components. `qml_backend.py` connects those screens to filtering, editing, settings, TMDB and backups. `tmdb_service.py` handles TMDB requests and the personal credential. `movie_store.py` continues to manage collection files, IDs and posters. `i18n.py` and `preferences.py` provide translations and preferences.
+
+The four Medeo Sans TTF files and their `OFL.txt` license are in `assets/fonts/medeo/`. They come from [DNFDEVS/medeo-font](https://github.com/DNFDEVS/medeo-font) and are licensed under SIL Open Font License 1.1. When packaging an executable, include the entire `assets/fonts/medeo/` directory next to the other application assets.
 
 ## TMDB setup
 
