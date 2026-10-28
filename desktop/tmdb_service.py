@@ -33,7 +33,8 @@ def movie_fields(details):
     if not 1888 <= year <= 2100:
         year = 0
     genres = []
-    for item in details.get("genres", []):
+    raw_genres = details.get("genres")
+    for item in raw_genres if isinstance(raw_genres, list) else []:
         if isinstance(item, dict) and isinstance(item.get("name"), str) and item["name"].strip():
             name = item["name"].strip()
             if name.casefold() not in {value.casefold() for value in genres}:
