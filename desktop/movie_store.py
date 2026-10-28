@@ -5,7 +5,9 @@ import sys
 import tempfile
 import uuid
 from contextlib import contextmanager
+from datetime import date
 from pathlib import Path
+import re
 
 compiled = globals().get("__compiled__")
 if compiled is not None:
@@ -74,6 +76,20 @@ def _validate_movie(movie, index, seen):
         raise ValueError(f"Movie #{index} has an invalid favorite flag.")
     if "status" in movie and movie["status"] not in ("watchlist", "watched"):
         raise ValueError(f"Movie #{index} has an invalid status.")
+    if "watch_dates" in movie:
+        values = movie["watch_dates"]
+        if not isinstance(values, list) or len(values) > 10000 or any(
+            not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value)
+            for value in values
+        ):
+            raise ValueError(f"Movie #{index} has invalid viewing history.")
+        try:
+            for value in values:
+                date.fromisoformat(value)
+        except ValueError as error:
+            raise ValueError(f"Movie #{index} has invalid viewing history.") from error
+        if values and movie.get("status") != "watched":
+            raise ValueError(f"Movie #{index} has viewing history but is not marked watched.")
     if "poster" in movie and ("\0" in movie["poster"] or Path(movie["poster"]).is_absolute()):
         raise ValueError(f"Movie #{index} has an invalid poster path.")
     if "poster_crop" in movie:
@@ -321,7 +337,7 @@ def save_movie(fields, movie_id=None, poster_source=None, remove_poster=False):
             raise ValueError("This movie no longer exists.")
         movie = dict(existing) if existing else {"id": _next_id(movies)}
         old_poster = movie.get("poster")
-        movie.update({key: fields[key] for key in ("description", "review", "status", "favorite", "poster_crop", "genres", "tags", "collections", "tmdb_id") if key in fields})
+        movie.update({key: fields[key] for key in ("description", "review", "status", "favorite", "poster_crop", "genres", "tags", "collections", "tmdb_id", "watch_dates") if key in fields})
         movie.update(title=title, year=year, rating=rating)
         _validate_movie(movie, 1, set())
         if "collections" in fields:

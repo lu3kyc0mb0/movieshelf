@@ -29,6 +29,8 @@ MovieShelf keeps its Python application logic and uses Qt Quick/QML for the inte
 
 Opening the editor creates a separate draft. Typing changes that draft, so Cancel can discard edits without touching `movies.json`. The backend compares the draft against its last saved snapshot to detect unsaved changes.
 
+The Viewing history tab stores watch dates as an optional `watch_dates` list of ISO `YYYY-MM-DD` strings. Existing movies without this field open with an empty history. Repeated dates represent separate watches on the same day. Adding a date marks the movie watched; moving it back to Watchlist requires removing its viewing dates first. The history is saved with the movie and included in library backups.
+
 Save validates the draft and writes it through `save_movie()`. Only after a successful write does the backend reset the unsaved state and refresh the library. If validation or writing fails, the editor stays open with the draft intact. Save & view also opens the saved movie's details.
 
 Poster files are copied into the managed posters directory on save. Removing or replacing a poster uses the existing store's cleanup rules. A movie can belong to several custom collections. Removing a collection keeps its films; editing those films drops references to collections that no longer exist.

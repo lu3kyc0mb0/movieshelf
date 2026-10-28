@@ -2,6 +2,16 @@ _language = "en"
 
 TRANSLATIONS = {
     "ru": {
+        "Viewing history": "История просмотров",
+        "Record every time you watched this movie, including rewatches.": "Записывайте каждый просмотр фильма, включая повторные.",
+        "Add watch date": "Добавить дату просмотра",
+        "Use YYYY-MM-DD. Add the same date twice if you watched twice that day.": "Формат даты: ГГГГ-ММ-ДД. Если смотрели дважды за день, добавьте дату два раза.",
+        "No watch dates recorded yet.": "Даты просмотров пока не записаны.",
+        "First watch": "Первый просмотр",
+        "Rewatch": "Повторный просмотр",
+        "Remove watch date": "Удалить дату просмотра",
+        "Remove viewing dates before moving this movie to Watchlist.": "Удалите даты просмотров, прежде чем переносить фильм в список ожидания.",
+        "Enter a valid viewing date in YYYY-MM-DD format, no later than today.": "Введите корректную дату просмотра в формате ГГГГ-ММ-ДД, не позднее сегодняшнего дня.",
         "Find a movie on TMDB": "Найти фильм в TMDB",
         "Choose a result, then check its details before saving.": "Выберите результат и проверьте данные перед сохранением.",
         "Use your own TMDB key": "Используйте свой ключ TMDB",
@@ -116,6 +126,16 @@ TRANSLATIONS = {
         "NO ARTWORK\nAdd your own poster": "НЕТ ПОСТЕРА\nДобавьте свой постер",
     },
     "kk": {
+        "Viewing history": "Көру тарихы",
+        "Record every time you watched this movie, including rewatches.": "Фильмді әр көрген күніңізді, соның ішінде қайта көрулерді де жазып отырыңыз.",
+        "Add watch date": "Көру күнін қосу",
+        "Use YYYY-MM-DD. Add the same date twice if you watched twice that day.": "Күн пішімі: ЖЖЖЖ-АА-КК. Бір күнде екі рет көрсеңіз, күнді екі рет қосыңыз.",
+        "No watch dates recorded yet.": "Көру күндері әлі жазылмаған.",
+        "First watch": "Алғашқы көру",
+        "Rewatch": "Қайта көру",
+        "Remove watch date": "Көру күнін жою",
+        "Remove viewing dates before moving this movie to Watchlist.": "Фильмді көру тізіміне қайтару үшін алдымен көру күндерін жойыңыз.",
+        "Enter a valid viewing date in YYYY-MM-DD format, no later than today.": "ЖЖЖЖ-АА-КК пішіміндегі бүгіннен кеш емес жарамды күнді енгізіңіз.",
         "Find a movie on TMDB": "TMDB арқылы фильм табу",
         "Choose a result, then check its details before saving.": "Нәтижені таңдап, сақтамас бұрын деректерін тексеріңіз.",
         "Use your own TMDB key": "Өз TMDB кілтіңізді пайдаланыңыз",

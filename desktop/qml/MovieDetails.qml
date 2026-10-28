@@ -38,6 +38,22 @@ Sheet {
                     Text { text: root.movie.rating ? "★ " + root.movie.rating + " / 10" : Theme.tr("Not rated"); color: Theme.gold; font.pixelSize: 20; font.weight: Font.DemiBold }
                     Text { visible: !!root.movie.genresText; text: root.movie.genresText || ""; color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                     Text { visible: !!root.movie.description; text: root.movie.description || ""; color: Theme.text; font.pixelSize: 14; lineHeight: 1.4; wrapMode: Text.WordWrap; Layout.fillWidth: true; textFormat: Text.PlainText }
+                    ColumnLayout {
+                        visible: !!root.movie.watch_dates && root.movie.watch_dates.length > 0
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Text { text: Theme.tr("Viewing history") + " · " + ((root.movie.watch_dates || []).length); color: Theme.secondary; font.pixelSize: 12; font.weight: Font.DemiBold }
+                        Repeater {
+                            model: root.movie.watch_dates || []
+                            delegate: RowLayout {
+                                required property string modelData
+                                required property int index
+                                spacing: 12
+                                Text { text: modelData; color: Theme.text; font.pixelSize: 13 }
+                                Text { text: Theme.tr(index === 0 ? "First watch" : "Rewatch"); color: Theme.accent; font.pixelSize: 12 }
+                            }
+                        }
+                    }
                     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }
                     Text { text: Theme.tr("My review"); color: Theme.secondary; font.pixelSize: 12; font.weight: Font.DemiBold }
                     Text { text: root.movie.review || Theme.tr("No written review yet."); color: Theme.text; font.pixelSize: 14; lineHeight: 1.4; wrapMode: Text.WordWrap; Layout.fillWidth: true; textFormat: Text.PlainText }

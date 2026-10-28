@@ -21,6 +21,7 @@ python -m venv .venv
 - **Watched:** completed films.
 - **Favorites:** personal favorites.
 - **My reviews:** films with a rating or written review.
+- Record viewing dates in the editor's **Viewing history** tab. Add multiple dates, including the same date more than once for repeat watches, and remove individual entries. The movie details show the full history.
 - Create and rename custom collections, then add any film to several collections.
 - Add genres and tags in the editor's Organization tab. Separate names with commas.
 - Search titles, IDs, release years, descriptions, reviews, genres and tags.

@@ -1,6 +1,5 @@
 # Future Ideas
 
-- [ ] Add a viewing history with watch dates and repeat watches.
 - [ ] Offer optional movie metadata lookup by title, with the user reviewing details before import.
 - [ ] Add collection insights such as viewing trends and rating distributions.
 - [ ] Add a backup browser with a preview and selective restore.
@@ -15,3 +14,4 @@
 - [X] Add advanced filters for year, rating, watch status, and favorites.
 - [X] Support dragging images onto the poster editor and previewing the final crop at different card sizes.
 - [X] Add genres, tags, and custom collections for organizing films.
+- [X] Add a viewing history with watch dates and repeat watches.

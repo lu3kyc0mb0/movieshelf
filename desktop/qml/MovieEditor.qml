@@ -11,7 +11,7 @@ Sheet {
     property bool closeApplication: false
     property var movie: shelf.draft
     signal quitRequested()
-    onOpened: { tab = 0; closeApplication = false; titleInput.forceActiveFocus() }
+    onOpened: { tab = 0; closeApplication = false; watchDateInput.text = shelf.todayText(); titleInput.forceActiveFocus() }
     function requestClose() {
         if (shelf.dirty) unsaved.open()
         else finishClose()
@@ -47,7 +47,7 @@ Sheet {
                 anchors.margins: 4
                 spacing: 3
                 Repeater {
-                    model: ["Overview", "Movie Review", "Organization", "Poster studio"]
+                    model: ["Overview", "Movie Review", "Viewing history", "Organization", "Poster studio"]
                     delegate: Button {
                         id: tabButton
                         required property string modelData
@@ -133,6 +133,39 @@ Sheet {
                 Text { text: root.movie.rating ? "★ " + root.movie.rating + " / 10" : Theme.tr("Not rated"); color: Theme.gold; font.pixelSize: 20; font.weight: Font.DemiBold }
                 Caption { text: Theme.tr("My review") }
                 NotesField { objectName: "reviewInput"; Layout.fillWidth: true; Layout.fillHeight: true; text: root.movie.review || ""; placeholderText: Theme.tr("Your personal review. What worked? How did it make you feel? Would you watch it again?"); onEdited: value => { if (root.opened) shelf.updateDraft("review", value) } }
+            }
+            ScrollView {
+                clip: true
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    spacing: 16
+                    Text { text: Theme.tr("Viewing history"); color: Theme.text; font.pixelSize: 20; font.weight: Font.DemiBold }
+                    Text { text: Theme.tr("Record every time you watched this movie, including rewatches."); color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Field { id: watchDateInput; objectName: "watchDateInput"; Layout.preferredWidth: 190; placeholderText: "YYYY-MM-DD"; onAccepted: addWatchDateButton.clicked() }
+                        ActionButton { id: addWatchDateButton; objectName: "addWatchDateButton"; text: Theme.tr("Add watch date"); primary: true; onClicked: { if (shelf.addWatchDate(watchDateInput.text)) watchDateInput.text = shelf.todayText() } }
+                        Item { Layout.fillWidth: true }
+                    }
+                    Text { text: Theme.tr("Use YYYY-MM-DD. Add the same date twice if you watched twice that day."); color: Theme.secondary; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }
+                    Text { visible: !root.movie.watch_dates || root.movie.watch_dates.length === 0; text: Theme.tr("No watch dates recorded yet."); color: Theme.secondary; font.pixelSize: 14 }
+                    Repeater {
+                        model: root.movie.watch_dates || []
+                        delegate: RowLayout {
+                            required property string modelData
+                            required property int index
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 45
+                            Text { text: (index + 1) + "."; color: Theme.secondary; Layout.preferredWidth: 30; font.pixelSize: 13 }
+                            Text { text: modelData; color: Theme.text; font.pixelSize: 14; Layout.preferredWidth: 130 }
+                            Text { text: Theme.tr(index === 0 ? "First watch" : "Rewatch"); color: Theme.accent; font.pixelSize: 12 }
+                            Item { Layout.fillWidth: true }
+                            ActionButton { glyph: "trash"; quiet: true; destructive: true; Accessible.name: Theme.tr("Remove watch date"); onClicked: shelf.removeWatchDate(index) }
+                        }
+                    }
+                }
             }
             ScrollView {
                 clip: true

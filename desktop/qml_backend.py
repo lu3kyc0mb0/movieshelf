@@ -111,7 +111,7 @@ class ShelfBackend(QObject):
         return t(key)
 
     def present(self, movie):
-        result = {"description": "", "review": "", "rating": 0, "status": "watchlist",
+        result = {"description": "", "review": "", "rating": 0, "status": "watchlist", "watch_dates": [],
                   "favorite": False, "genres": [], "tags": [], "collections": [], "tmdb_id": 0,
                   "poster_crop": {"zoom": 1.0, "x": 0.0, "y": 0.0, "mode": "fill"}}
         result.update(copy.deepcopy(movie))
@@ -286,8 +286,40 @@ class ShelfBackend(QObject):
     def updateDraft(self, key, value):
         if key not in ("title", "year", "description", "review", "rating", "status", "favorite", "genresText", "tagsText"):
             return
+        if key == "status" and value == "watchlist" and self._draft.get("watch_dates"):
+            self.errorOccurred.emit(t("Remove viewing dates before moving this movie to Watchlist."))
+            return
         if self._draft.get(key) != value:
             self._draft[key] = value
+            self.draftChanged.emit()
+
+    @Slot(result=str)
+    def todayText(self):
+        return date.today().isoformat()
+
+    @Slot(str, result=bool)
+    def addWatchDate(self, value):
+        value = value.strip()
+        try:
+            if len(value) != 10 or date.fromisoformat(value).isoformat() != value or date.fromisoformat(value) > date.today():
+                raise ValueError()
+        except ValueError:
+            self.errorOccurred.emit(t("Enter a valid viewing date in YYYY-MM-DD format, no later than today."))
+            return False
+        dates = list(self._draft.get("watch_dates", []))
+        dates.append(value)
+        dates.sort()
+        self._draft["watch_dates"] = dates
+        self._draft["status"] = "watched"
+        self.draftChanged.emit()
+        return True
+
+    @Slot(int)
+    def removeWatchDate(self, index):
+        dates = list(self._draft.get("watch_dates", []))
+        if 0 <= index < len(dates):
+            dates.pop(index)
+            self._draft["watch_dates"] = dates
             self.draftChanged.emit()
 
     @Slot(str, bool)
@@ -356,7 +388,7 @@ class ShelfBackend(QObject):
 
     @Slot(bool, result=bool)
     def saveMovie(self, view_after):
-        fields = {key: self._draft[key] for key in ("title", "year", "description", "review", "rating", "status", "favorite", "poster_crop", "collections")}
+        fields = {key: self._draft[key] for key in ("title", "year", "description", "review", "rating", "status", "favorite", "poster_crop", "collections", "watch_dates")}
         fields["genres"] = split_names(self._draft["genresText"])
         fields["tags"] = split_names(self._draft["tagsText"])
         if self._draft.get("tmdb_id"):
