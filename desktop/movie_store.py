@@ -65,6 +65,8 @@ def _validate_movie(movie, index, seen):
         raise ValueError(f"Movie #{index} has an invalid release year.")
     if "rating" in movie and (type(movie["rating"]) is not int or not 0 <= movie["rating"] <= 10):
         raise ValueError(f"Movie #{index} has an invalid rating.")
+    if "tmdb_id" in movie and (type(movie["tmdb_id"]) is not int or movie["tmdb_id"] < 1):
+        raise ValueError(f"Movie #{index} has an invalid TMDB ID.")
     for key in ("description", "review", "poster"):
         if key in movie and not isinstance(movie[key], str):
             raise ValueError(f"Movie #{index} has an invalid {key}.")
@@ -319,7 +321,7 @@ def save_movie(fields, movie_id=None, poster_source=None, remove_poster=False):
             raise ValueError("This movie no longer exists.")
         movie = dict(existing) if existing else {"id": _next_id(movies)}
         old_poster = movie.get("poster")
-        movie.update({key: fields[key] for key in ("description", "review", "status", "favorite", "poster_crop", "genres", "tags", "collections") if key in fields})
+        movie.update({key: fields[key] for key in ("description", "review", "status", "favorite", "poster_crop", "genres", "tags", "collections", "tmdb_id") if key in fields})
         movie.update(title=title, year=year, rating=rating)
         _validate_movie(movie, 1, set())
         if "collections" in fields:

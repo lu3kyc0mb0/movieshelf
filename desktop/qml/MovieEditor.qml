@@ -20,6 +20,7 @@ Sheet {
         root.close()
         if (closeApplication) quitRequested()
     }
+    onClosed: shelf.discardDraft()
     Shortcut { sequence: "Ctrl+S"; enabled: root.opened; onActivated: shelf.saveMovie(false) }
     Shortcut { sequence: "Escape"; enabled: root.opened && !unsaved.opened && !deleteConfirm.opened; onActivated: root.requestClose() }
     component Caption: Text { color: Theme.secondary; font.pixelSize: 12; font.weight: Font.Medium }

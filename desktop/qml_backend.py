@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QFileDialog
 import movie_store as store
 import preferences
 from i18n import film_count, set_language, t
+from tmdb_service import TmdbService
 
 def split_names(value):
     names = {}
@@ -61,6 +62,7 @@ class ShelfBackend(QObject):
         self._detail = {}
         self._initial = ""
         self._poster_source = None
+        self._temporary_poster = None
         self._remove_poster = False
         self.startup_errors = []
         try:
@@ -73,11 +75,20 @@ class ShelfBackend(QObject):
                        "filters": {}, "collections": [], "genres": [], "tags": [],
                        "total": 0, "watched": 0, "average": "—", "resultCount": 0,
                        "resultLabel": "", "title": t("Library"), "filterCount": 0}
+        self.tmdb_service = TmdbService(self)
+        if self.tmdb_service.credential_error:
+            self.startup_errors.append(self.tmdb_service.credential_error)
+        self.tmdb_service.imported.connect(self.importFromTmdb)
+        self.tmdb_service.errorOccurred.connect(self.errorOccurred)
         self.reload(startup=True)
 
     @Property(QObject, constant=True)
     def movieModel(self):
         return self.model
+
+    @Property(QObject, constant=True)
+    def tmdb(self):
+        return self.tmdb_service
 
     @Property("QVariantMap", notify=stateChanged)
     def state(self):
@@ -101,7 +112,7 @@ class ShelfBackend(QObject):
 
     def present(self, movie):
         result = {"description": "", "review": "", "rating": 0, "status": "watchlist",
-                  "favorite": False, "genres": [], "tags": [], "collections": [],
+                  "favorite": False, "genres": [], "tags": [], "collections": [], "tmdb_id": 0,
                   "poster_crop": {"zoom": 1.0, "x": 0.0, "y": 0.0, "mode": "fill"}}
         result.update(copy.deepcopy(movie))
         path = store.poster_path(movie)
@@ -234,6 +245,7 @@ class ShelfBackend(QObject):
         if movie_id and movie is None:
             self.errorOccurred.emit(t("This movie no longer exists."))
             return
+        self._clear_temporary_poster()
         self._draft = self.present(movie or {"id": 0, "title": "", "year": date.today().year})
         known = {c["id"] for c in self._state["collections"]}
         self._draft["collections"] = [v for v in self._draft["collections"] if v in known]
@@ -242,6 +254,30 @@ class ShelfBackend(QObject):
         self._initial = self._snapshot()
         self.draftChanged.emit()
         self.editorRequested.emit()
+
+    def _clear_temporary_poster(self):
+        if self._temporary_poster:
+            try:
+                Path(self._temporary_poster).unlink(missing_ok=True)
+            except OSError:
+                pass
+            self._temporary_poster = None
+
+    @Slot()
+    def discardDraft(self):
+        self._clear_temporary_poster()
+
+    @Slot("QVariantMap", str)
+    def importFromTmdb(self, details, poster):
+        self.editMovie(0)
+        self._draft.update({"title": details["title"], "year": details["year"] or "",
+                            "description": details["description"], "genres": details["genres"],
+                            "genresText": ", ".join(details["genres"]), "tmdb_id": details["tmdb_id"]})
+        if poster:
+            self._temporary_poster = poster
+            self._poster_source = poster
+            self._draft["posterUrl"] = QUrl.fromLocalFile(poster).toString()
+        self.draftChanged.emit()
 
     def _snapshot(self):
         return json.dumps((self._draft, self._poster_source, self._remove_poster), sort_keys=True)
@@ -303,6 +339,7 @@ class ShelfBackend(QObject):
         if reader.read().isNull():
             self.errorOccurred.emit(t("This image could not be decoded."))
             return False
+        self._clear_temporary_poster()
         self._poster_source = str(path.resolve())
         self._remove_poster = False
         self._draft["posterUrl"] = QUrl.fromLocalFile(self._poster_source).toString()
@@ -311,6 +348,7 @@ class ShelfBackend(QObject):
 
     @Slot()
     def removePoster(self):
+        self._clear_temporary_poster()
         self._poster_source = None
         self._remove_poster = True
         self._draft["posterUrl"] = ""
@@ -321,11 +359,14 @@ class ShelfBackend(QObject):
         fields = {key: self._draft[key] for key in ("title", "year", "description", "review", "rating", "status", "favorite", "poster_crop", "collections")}
         fields["genres"] = split_names(self._draft["genresText"])
         fields["tags"] = split_names(self._draft["tagsText"])
+        if self._draft.get("tmdb_id"):
+            fields["tmdb_id"] = self._draft["tmdb_id"]
         try:
             movie = store.save_movie(fields, self._draft["id"] or None, self._poster_source, self._remove_poster)
         except (OSError, ValueError) as error:
             self.errorOccurred.emit(t(str(error)))
             return False
+        self._clear_temporary_poster()
         self._draft = self.present(movie)
         self._poster_source = None
         self._remove_poster = False

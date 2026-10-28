@@ -28,6 +28,7 @@ python -m venv .venv
 - Use Filters to combine year and rating ranges, watch status, favorites, genre, tag and custom collection.
 - Change the poster card size with the library slider.
 - Drop a local image onto the poster editor, adjust its crop, and preview it at three card sizes before saving.
+- Use **Add movie** to search TMDB by title, select a match, review its imported details and save it. You can still add a movie manually with `Ctrl+N` or **Enter manually**.
 - Change the interface language in Settings: English, Russian or Kazakh. The choice is saved for the next launch.
 - Click a poster to open its details, then choose **Edit movie**. **Save** applies changes without leaving the editor; **Save & view** opens the saved movie.
 - The editor checks for unsaved changes when closing it or the application.
@@ -36,7 +37,17 @@ python -m venv .venv
 
 ## Files and data
 
-`main.py` starts the QML application. `qml/` contains the screens and reusable visual components. `qml_backend.py` connects those screens to filtering, editing, settings and backups. `movie_store.py` continues to manage collection files, IDs and posters. `i18n.py` and `preferences.py` provide translations and preferences.
+`main.py` starts the QML application. `qml/` contains the screens and reusable visual components. `qml_backend.py` connects those screens to filtering, editing, settings, TMDB and backups. `tmdb_service.py` handles TMDB requests and the personal credential. `movie_store.py` continues to manage collection files, IDs and posters. `i18n.py` and `preferences.py` provide translations and preferences.
+
+## TMDB setup
+
+1. Create your own TMDB account and request an API key at [the TMDB API settings page](https://www.themoviedb.org/settings/api).
+2. Open **Add movie** or **Settings** and enter your own v3 API key or API Read Access Token. Each operating-system user has a separate credential; MovieShelf does not ship with a shared key.
+3. Search for a title, select the result and check the draft before saving. The title, year, overview, genres and available poster are imported. Your rating, review, watch status, tags and collections remain your own.
+
+The credential is stored in your operating system's Qt application configuration directory as `tmdb.json`, outside the library. It is excluded from MovieShelf library backups. It is stored locally as plain text, so protect your user account and do not share the file. **Remove key** in Settings deletes it. A missing poster or unavailable network does not prevent manual entry.
+
+TMDB states that API use is free for noncommercial projects with attribution; commercial use requires separate licensing. Supplying a personal key does not change those terms. See the [TMDB FAQ](https://developer.themoviedb.org/docs/faq). This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 The previous PySide6 Widgets interface is available with `python desktop/widgets_main.py` from the repository root. Its helper modules (`editor.py`, `panels.py`, `posters.py`, `theme.py`, `motion.py`) are retained for that entry point. Both modern interfaces use the same library files. The separate `legacy-win32/` project is unchanged.
 

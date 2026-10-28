@@ -8,6 +8,7 @@ MovieShelf keeps its Python application logic and uses Qt Quick/QML for the inte
 2. `qml_backend.py` reads the library through `movie_store.py`. Its `MovieModel` exposes each visible movie to the gallery. The backend applies navigation, search, filters and sorting before updating that model.
 3. QML screens call backend methods when the user edits or saves something. Qt signals notify the screens when data changes, so titles, statistics, posters and translated labels update together.
 4. `movie_store.py` remains responsible for validation, file locking, atomic writes, permanent IDs and poster copies. QML does not write JSON files directly.
+5. `tmdb_service.py` sends asynchronous title, details and poster requests to TMDB. It passes a selected result to the same editor draft, which writes to the library only when Save succeeds.
 
 ## Screen files
 
@@ -18,6 +19,7 @@ MovieShelf keeps its Python application logic and uses Qt Quick/QML for the inte
 | `qml/MovieEditor.qml` | Overview, review, organization and poster studio tabs; save and discard actions. |
 | `qml/FilterPanel.qml` | Combined filters for years, ratings, status, favorites, genres, tags and collections. |
 | `qml/SettingsSheet.qml` | Appearance, language, motion, statistics, poster size and backup export. |
+| `qml/TmdbSheet.qml` | Personal TMDB key setup, title search and result selection. |
 | `qml/CollectionsSheet.qml` | Create, rename and delete custom collections. |
 | `qml/Poster.qml` | Image loading, rounded masking, crop positioning and image drops. |
 | `qml/Theme.qml` | Shared colors, translation lookup and animation duration. |
@@ -30,6 +32,8 @@ Opening the editor creates a separate draft. Typing changes that draft, so Cance
 Save validates the draft and writes it through `save_movie()`. Only after a successful write does the backend reset the unsaved state and refresh the library. If validation or writing fails, the editor stays open with the draft intact. Save & view also opens the saved movie's details.
 
 Poster files are copied into the managed posters directory on save. Removing or replacing a poster uses the existing store's cleanup rules. A movie can belong to several custom collections. Removing a collection keeps its films; editing those films drops references to collections that no longer exist.
+
+TMDB imports use a temporary poster file until Save. Discarding the draft removes that file. The imported TMDB ID is an optional field in `movies.json`; existing records remain valid. Credentials are saved per operating-system user under Qt's application configuration directory and are excluded from library backups. Requests use a personal v3 key or Read Access Token. The TMDB API's free use is limited to noncommercial projects under its terms.
 
 ## Rendering and cropping
 

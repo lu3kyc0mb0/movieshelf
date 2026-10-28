@@ -25,6 +25,7 @@ ApplicationWindow {
     property bool quitting: false
     function navigate(view) { shelf.setView(view); gallery.positionViewAtBeginning(); pageFade.restart() }
     function openSearch() { searchField.text = shelf.state.query; searchSheet.open() }
+    function addMovie() { tmdbSheet.open() }
     onClosing: close => {
         if (editor.opened && shelf.dirty && !quitting) {
             close.accepted = false
@@ -32,7 +33,7 @@ ApplicationWindow {
             editor.requestClose()
         }
     }
-    Shortcut { sequence: "Ctrl+N"; enabled: !editor.opened && !settings.opened; onActivated: shelf.editMovie(0) }
+    Shortcut { sequence: "Ctrl+N"; enabled: !editor.opened && !settings.opened && !tmdbSheet.opened; onActivated: shelf.editMovie(0) }
     Shortcut { sequence: "Ctrl+F"; enabled: !editor.opened && !settings.opened; onActivated: window.openSearch() }
     Rectangle {
         id: sidebar
@@ -115,7 +116,7 @@ ApplicationWindow {
             spacing: 12
             Text { text: shelf.state.title; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 32; font.weight: Font.DemiBold; font.letterSpacing: -1; Layout.fillWidth: true; elide: Text.ElideRight }
             ActionButton { objectName: "searchButton"; glyph: "search"; quiet: true; Accessible.name: Theme.tr("Search (Ctrl+F)"); onClicked: window.openSearch() }
-            ActionButton { text: Theme.tr("Add a movie"); glyph: "plus"; primary: true; onClicked: shelf.editMovie(0) }
+            ActionButton { text: Theme.tr("Add a movie"); glyph: "plus"; primary: true; onClicked: window.addMovie() }
         }
         RowLayout {
             visible: shelf.state.preferences.show_statistics
@@ -226,7 +227,7 @@ ApplicationWindow {
                 }
                 Text { text: Theme.tr("A little room for your next discovery."); color: Theme.text; font.pixelSize: 18; anchors.horizontalCenter: parent.horizontalCenter }
                 Text { text: Theme.tr("Try another search, or add a film to your collection."); color: Theme.secondary; font.pixelSize: 13; anchors.horizontalCenter: parent.horizontalCenter }
-                ActionButton { text: Theme.tr("Add a movie"); primary: true; anchors.horizontalCenter: parent.horizontalCenter; onClicked: shelf.editMovie(0) }
+                ActionButton { text: Theme.tr("Add a movie"); primary: true; anchors.horizontalCenter: parent.horizontalCenter; onClicked: window.addMovie() }
             }
         }
     }
@@ -254,6 +255,7 @@ ApplicationWindow {
     MovieEditor { id: editor; objectName: "movieEditor"; onQuitRequested: { window.quitting = true; window.close() } }
     MovieDetails { id: details; objectName: "movieDetails" }
     SettingsSheet { id: settings; objectName: "settingsSheet" }
+    TmdbSheet { id: tmdbSheet; objectName: "tmdbSheet" }
     CollectionsSheet { id: collections; objectName: "collectionsSheet" }
     Sheet {
         id: errorSheet
@@ -290,7 +292,7 @@ ApplicationWindow {
     }
     Connections {
         target: shelf
-        function onEditorRequested() { details.close(); editor.open() }
+        function onEditorRequested() { details.close(); tmdbSheet.close(); editor.open() }
         function onPreviewRequested() { details.open() }
         function onMovieSaved(viewAfter) { if (viewAfter) { editor.close(); details.open() } }
         function onErrorOccurred(message) { errorSheet.message = message; errorSheet.open() }
