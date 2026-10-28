@@ -104,6 +104,7 @@ ApplicationWindow {
                 ScrollIndicator.vertical: ScrollIndicator {}
             }
             Item { Layout.fillHeight: true }
+            ActionButton { text: Theme.tr("Collection insights"); glyph: "reviews"; quiet: true; Layout.fillWidth: true; onClicked: insights.open() }
             ActionButton { text: Theme.tr("Settings"); glyph: "settings"; quiet: true; Layout.fillWidth: true; onClicked: settings.open() }
             Text { text: "v1.3.0"; font.pixelSize: 11; color: Theme.secondary; Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 10 }
         }
@@ -257,6 +258,7 @@ ApplicationWindow {
     SettingsSheet { id: settings; objectName: "settingsSheet" }
     TmdbSheet { id: tmdbSheet; objectName: "tmdbSheet" }
     CollectionsSheet { id: collections; objectName: "collectionsSheet" }
+    InsightsSheet { id: insights; objectName: "insightsSheet" }
     Sheet {
         id: errorSheet
         objectName: "errorSheet"

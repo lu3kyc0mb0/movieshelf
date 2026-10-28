@@ -20,6 +20,7 @@ MovieShelf keeps its Python application logic and uses Qt Quick/QML for the inte
 | `qml/FilterPanel.qml` | Combined filters for years, ratings, status, favorites, genres, tags and collections. |
 | `qml/SettingsSheet.qml` | Appearance, language, motion, statistics, poster size and backup export. |
 | `qml/TmdbSheet.qml` | Personal TMDB key setup, title search and result selection. |
+| `qml/InsightsSheet.qml` | Local viewing trends and rating distribution for the library or a custom collection. |
 | `qml/CollectionsSheet.qml` | Create, rename and delete custom collections. |
 | `qml/Poster.qml` | Image loading, rounded masking, crop positioning and image drops. |
 | `qml/Theme.qml` | Shared colors, translation lookup and animation duration. |
@@ -30,6 +31,8 @@ MovieShelf keeps its Python application logic and uses Qt Quick/QML for the inte
 Opening the editor creates a separate draft. Typing changes that draft, so Cancel can discard edits without touching `movies.json`. The backend compares the draft against its last saved snapshot to detect unsaved changes.
 
 The Viewing history tab stores watch dates as an optional `watch_dates` list of ISO `YYYY-MM-DD` strings. Existing movies without this field open with an empty history. Repeated dates represent separate watches on the same day. Adding a date marks the movie watched; moving it back to Watchlist requires removing its viewing dates first. The history is saved with the movie and included in library backups.
+
+`insights.py` calculates analytics from saved movies. Its 12 monthly buckets count recorded viewing dates, and its rating bins count films with personal scores from 1 to 10. Older watched films without dates are shown separately because their viewing month is unknown. Selecting a custom collection limits both charts and summary figures to movies in that collection. No TMDB request is involved.
 
 Save validates the draft and writes it through `save_movie()`. Only after a successful write does the backend reset the unsaved state and refresh the library. If validation or writing fails, the editor stays open with the draft intact. Save & view also opens the saved movie's details.
 

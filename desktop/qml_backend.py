@@ -10,6 +10,7 @@ from PySide6.QtGui import QImageReader
 from PySide6.QtWidgets import QFileDialog
 import movie_store as store
 import preferences
+from insights import build_insights
 from i18n import film_count, set_language, t
 from tmdb_service import TmdbService
 
@@ -85,6 +86,10 @@ class ShelfBackend(QObject):
     @Property(QObject, constant=True)
     def movieModel(self):
         return self.model
+
+    @Slot(str, result="QVariantMap")
+    def collectionInsights(self, collection_id):
+        return build_insights(self.movies, collection_id)
 
     @Property(QObject, constant=True)
     def tmdb(self):
