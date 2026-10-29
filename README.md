@@ -1,4 +1,4 @@
-![MovieShelf Banner](docs/banner.jpg)
+![Banner](docs/banner.jpg)
 
 # MovieShelf
 

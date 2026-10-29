@@ -1,8 +1,12 @@
-# MovieShelf Desktop 2.0.0
+![MovieShelf Banner](../docs/banner.jpg)
 
-A personal movie library and review journal built with Python, PySide6 and Qt Quick/QML. The interface uses a quiet sidebar, a poster gallery, compact statistics, light and dark themes, and smooth transitions.
+# MovieShelf Desktop
 
-![Desktop](../docs/desktop.png)
+MovieShelf is a personal home for your movies. Add films manually or find them through TMDB, save posters, build a watchlist, and keep track of favorites. Write reviews, rate each film, and record every viewing, including rewatches. Organize your library with genres, tags, custom collections, and filters. Explore your viewing habits through statistics, and make the app your own with themes, fonts, and keyboard shortcuts. MovieShelf is available in English, Russian, and Kazakh.
+
+## Preview
+
+![MovieShelf](../docs/desktop.png)
 
 ## Run
 
