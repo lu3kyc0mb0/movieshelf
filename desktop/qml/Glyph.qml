@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 
-Shape {
+Item {
     id: root
     property string name: "library"
     property color ink: Theme.secondary
@@ -25,14 +25,20 @@ Shape {
     })
     implicitWidth: 22
     implicitHeight: 22
-    preferredRendererType: Shape.CurveRenderer
-    ShapePath {
-        strokeColor: root.ink
-        strokeWidth: 1.6
-        fillColor: "transparent"
-        capStyle: ShapePath.RoundCap
-        joinStyle: ShapePath.RoundJoin
-        PathSvg { path: root.paths[root.name] || root.paths.library }
+    layer.enabled: true
+    layer.samples: 4
+    Shape {
+        width: 24
+        height: 24
+        preferredRendererType: Shape.CurveRenderer
+        transform: Scale { xScale: root.width / 24; yScale: root.height / 24 }
+        ShapePath {
+            strokeColor: root.ink
+            strokeWidth: 1.6
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            joinStyle: ShapePath.RoundJoin
+            PathSvg { path: root.paths[root.name] || root.paths.library }
+        }
     }
-    transform: Scale { xScale: root.width / 24; yScale: root.height / 24 }
 }

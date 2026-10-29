@@ -3,12 +3,12 @@ import QtQuick.Controls
 
 TextField {
     id: control
-    implicitHeight: 42
+    implicitHeight: Theme.px(42)
     color: Theme.text
     placeholderTextColor: Theme.secondary
     selectionColor: Theme.accent
-    selectedTextColor: "white"
-    font.pixelSize: 14
+    selectedTextColor: Theme.accentText
+    font.pixelSize: Theme.px(14)
     leftPadding: 13
     rightPadding: 13
     selectByMouse: true

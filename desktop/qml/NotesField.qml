@@ -15,8 +15,8 @@ ScrollView {
         color: Theme.text
         placeholderTextColor: Theme.secondary
         selectionColor: Theme.accent
-        selectedTextColor: "white"
-        font.pixelSize: 14
+        selectedTextColor: Theme.accentText
+        font.pixelSize: Theme.px(14)
         wrapMode: TextEdit.Wrap
         selectByMouse: true
         padding: 13

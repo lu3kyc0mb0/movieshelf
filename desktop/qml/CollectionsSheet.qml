@@ -15,7 +15,7 @@ Sheet {
         spacing: 20
         RowLayout {
             Layout.fillWidth: true
-            Text { text: Theme.tr("Collections"); color: Theme.text; font.pixelSize: 27; font.weight: Font.DemiBold; Layout.fillWidth: true }
+            Text { text: Theme.tr("Collections"); color: Theme.text; font.pixelSize: Theme.px(27); font.weight: Font.DemiBold; Layout.fillWidth: true }
             ActionButton { glyph: "close"; quiet: true; Accessible.name: Theme.tr("Done"); onClicked: root.close() }
         }
         ListView {
@@ -43,7 +43,7 @@ Sheet {
             }
             ScrollBar.vertical: ScrollBar {}
         }
-        Text { text: Theme.tr(root.selectedId ? "Rename collection" : "New collection"); color: Theme.secondary; font.pixelSize: 12 }
+        Text { text: Theme.tr(root.selectedId ? "Rename collection" : "New collection"); color: Theme.secondary; font.pixelSize: Theme.px(12) }
         RowLayout {
             Layout.fillWidth: true
             Field { id: nameInput; objectName: "collectionNameInput"; Layout.fillWidth: true; maximumLength: 60; placeholderText: Theme.tr("Collection name"); onAccepted: saveButton.clicked() }
@@ -59,7 +59,7 @@ Sheet {
         ColumnLayout {
             anchors.fill: parent
             spacing: 18
-            Text { text: Theme.tr("Delete collection?"); color: Theme.text; font.pixelSize: 22; font.weight: Font.DemiBold }
+            Text { text: Theme.tr("Delete collection?"); color: Theme.text; font.pixelSize: Theme.px(22); font.weight: Font.DemiBold }
             Text { text: Theme.tr("Delete “{name}”? Films will stay in your library.").replace("{name}", root.selectedName); color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
             RowLayout {
                 Layout.alignment: Qt.AlignRight

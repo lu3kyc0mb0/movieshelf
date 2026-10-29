@@ -12,7 +12,7 @@ Sheet {
         spacing: 24
         RowLayout {
             Layout.fillWidth: true
-            Text { text: Theme.tr("Movie details"); color: Theme.secondary; font.pixelSize: 13; Layout.fillWidth: true }
+            Text { text: Theme.tr("Movie details"); color: Theme.secondary; font.pixelSize: Theme.px(13); Layout.fillWidth: true }
             ActionButton { glyph: "close"; quiet: true; Accessible.name: Theme.tr("Done"); onClicked: root.close() }
         }
         RowLayout {
@@ -28,35 +28,35 @@ Sheet {
                 ColumnLayout {
                     width: parent.width
                     spacing: 18
-                    Text { text: root.movie.title || ""; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 30; font.weight: Font.DemiBold; font.letterSpacing: -0.8; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-                    Text { text: (root.movie.year || "") + "  ·  ID #" + (root.movie.id || ""); color: Theme.secondary; font.pixelSize: 14 }
+                    Text { text: root.movie.title || ""; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: Theme.px(30); font.weight: Font.DemiBold; font.letterSpacing: -0.8; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                    Text { text: (root.movie.year || "") + "  ·  ID #" + (root.movie.id || ""); color: Theme.secondary; font.pixelSize: Theme.px(14) }
                     RowLayout {
                         spacing: 14
-                        Text { text: Theme.tr(root.movie.status === "watched" ? "Watched" : "Want to watch"); color: Theme.accent; font.pixelSize: 13 }
+                        Text { text: Theme.tr(root.movie.status === "watched" ? "Watched" : "Want to watch"); color: Theme.accent; font.pixelSize: Theme.px(13) }
                         Glyph { name: "favorite"; visible: root.movie.favorite || false; ink: Theme.accent; width: 17; height: 17 }
                     }
-                    Text { text: root.movie.rating ? "★ " + root.movie.rating + " / 10" : Theme.tr("Not rated"); color: Theme.gold; font.pixelSize: 20; font.weight: Font.DemiBold }
+                    Text { text: root.movie.rating ? "★ " + root.movie.rating + " / 10" : Theme.tr("Not rated"); color: Theme.gold; font.pixelSize: Theme.px(20); font.weight: Font.DemiBold }
                     Text { visible: !!root.movie.genresText; text: root.movie.genresText || ""; color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-                    Text { visible: !!root.movie.description; text: root.movie.description || ""; color: Theme.text; font.pixelSize: 14; lineHeight: 1.4; wrapMode: Text.WordWrap; Layout.fillWidth: true; textFormat: Text.PlainText }
+                    Text { visible: !!root.movie.description; text: root.movie.description || ""; color: Theme.text; font.pixelSize: Theme.px(14); lineHeight: 1.4; wrapMode: Text.WordWrap; Layout.fillWidth: true; textFormat: Text.PlainText }
                     ColumnLayout {
                         visible: !!root.movie.watch_dates && root.movie.watch_dates.length > 0
                         Layout.fillWidth: true
                         spacing: 8
-                        Text { text: Theme.tr("Viewing history") + " · " + ((root.movie.watch_dates || []).length); color: Theme.secondary; font.pixelSize: 12; font.weight: Font.DemiBold }
+                        Text { text: Theme.tr("Viewing history") + " · " + ((root.movie.watch_dates || []).length); color: Theme.secondary; font.pixelSize: Theme.px(12); font.weight: Font.DemiBold }
                         Repeater {
                             model: root.movie.watch_dates || []
                             delegate: RowLayout {
                                 required property string modelData
                                 required property int index
                                 spacing: 12
-                                Text { text: modelData; color: Theme.text; font.pixelSize: 13 }
-                                Text { text: Theme.tr(index === 0 ? "First watch" : "Rewatch"); color: Theme.accent; font.pixelSize: 12 }
+                                Text { text: modelData; color: Theme.text; font.pixelSize: Theme.px(13) }
+                                Text { text: Theme.tr(index === 0 ? "First watch" : "Rewatch"); color: Theme.accent; font.pixelSize: Theme.px(12) }
                             }
                         }
                     }
                     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }
-                    Text { text: Theme.tr("My review"); color: Theme.secondary; font.pixelSize: 12; font.weight: Font.DemiBold }
-                    Text { text: root.movie.review || Theme.tr("No written review yet."); color: Theme.text; font.pixelSize: 14; lineHeight: 1.4; wrapMode: Text.WordWrap; Layout.fillWidth: true; textFormat: Text.PlainText }
+                    Text { text: Theme.tr("My review"); color: Theme.secondary; font.pixelSize: Theme.px(12); font.weight: Font.DemiBold }
+                    Text { text: root.movie.review || Theme.tr("No written review yet."); color: Theme.text; font.pixelSize: Theme.px(14); lineHeight: 1.4; wrapMode: Text.WordWrap; Layout.fillWidth: true; textFormat: Text.PlainText }
                     Text { visible: !!root.movie.tagsText; text: root.movie.tagsText || ""; color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                 }
             }

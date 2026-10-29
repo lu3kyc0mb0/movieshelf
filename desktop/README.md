@@ -1,4 +1,4 @@
-# MovieShelf Desktop
+# MovieShelf Desktop 2.0.0
 
 A personal movie library and review journal built with Python, PySide6 and Qt Quick/QML. The interface uses a quiet sidebar, a poster gallery, compact statistics, light and dark themes, and smooth transitions.
 
@@ -59,9 +59,27 @@ See [QML_MIGRATION.md](QML_MIGRATION.md) for a walkthrough of the architecture.
 
 Your collection uses `movies.json`, `posters/`, `movie_id_counter.json`, and `collections.json` after you create a custom collection. Keep these files when moving your library. Settings → Export library backup includes the collection registry. `movies.json.lock` is created automatically to coordinate simultaneous app sessions.
 
-## Shortcuts
+## Customization and accessibility
+
+Settings is organized into General, Appearance, and Keyboard, in that order.
+
+- **Appearance:** the dropdown offers Light theme, Dark theme, High contrast, and Custom theme. Custom theme shows saved previews with selection checkboxes and Edit buttons, followed by a Create theme tile. The editor configures the name, base colors, font, text size, and individual colors. Import and Export sit beside the dropdown. Theme files contain colors, name, font family, and text size, but not credentials, application scale, or shortcuts. An imported font must also be available on the receiving computer; bundled Medeo Sans is always available.
+- **Appearance controls:** choose bundled Medeo Sans or another installed font using accelerated wheel scrolling or the wide scrollbar, adjust text from 85% to 150%, and set application scaling from 75% to 200%. Saving a different font or application scale displays a restart notice. Application scaling takes effect on the next launch and combines with the display's system scaling. Poster size, animation and statistics controls are also available here.
+- **Keyboard:** actions are grouped by purpose. Click a shortcut, then press a combination. Backspace or Delete clears it; Escape cancels recording. Conflicting shortcuts cannot be saved. Navigation keys, common text-editing shortcuts and system close shortcuts are reserved. Individual assignments or the entire map can be reset.
+- **General:** language, library backup, personal TMDB credentials and credits. This section opens first.
+
+Changes remain in a draft until Save and apply. Cancel discards pending appearance, accessibility and shortcut changes. Theme export writes the pending theme without applying it. TMDB key and backup buttons perform their named actions immediately.
+
+Tab and Shift+Tab move focus between controls. Enter or Space activates buttons and film cards. Escape closes dialogs or asks about unsaved movie edits. Library commands are suspended while a dialog is open; the save command works only in the movie editor.
+
+## Default shortcuts
 
 - `Ctrl+N`: add a film.
 - `Ctrl+F`: open search.
 - `Ctrl+S`: save the movie editor.
+- `Ctrl+Shift+N`: find a movie on TMDB.
+- `Ctrl+,`: open settings.
+- `Ctrl+I`: open collection insights.
+- `Ctrl+Shift+C`: manage collections.
+- `Alt+1` / `Alt+2` / `Alt+3` / `Alt+4`: Library / Watchlist / Watched / Favorites.
 - `Esc`: close a dialog, or request to close the editor.

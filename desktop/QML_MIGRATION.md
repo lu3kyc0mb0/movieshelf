@@ -1,6 +1,6 @@
 # The QML interface
 
-MovieShelf keeps its Python application logic and uses Qt Quick/QML for the interface. This source update retains the v1.3.0 data format and application version. It does not rebuild published releases or modify the PySide2 legacy project.
+MovieShelf 2.0.0 keeps its Python application logic and uses Qt Quick/QML for the interface. Existing movie libraries remain compatible with the 1.3.0 data format. The PySide2 legacy project retains its original version.
 
 ## How the pieces connect
 
@@ -19,6 +19,8 @@ MovieShelf keeps its Python application logic and uses Qt Quick/QML for the inte
 | `qml/MovieEditor.qml` | Overview, review, organization and poster studio tabs; save and discard actions. |
 | `qml/FilterPanel.qml` | Combined filters for years, ratings, status, favorites, genres, tags and collections. |
 | `qml/SettingsSheet.qml` | Appearance, language, motion, statistics, poster size and backup export. |
+| `qml/ThemeEditor.qml` | Dedicated editor for a custom theme's name, base palette, colors, font, and text size. |
+| `qml/ShortcutRecorder.qml` | Capture a single keyboard combination, with cancellation and clearing. |
 | `qml/TmdbSheet.qml` | Personal TMDB key setup, title search and result selection. |
 | `qml/InsightsSheet.qml` | Local viewing trends and rating distribution for the library or a custom collection. |
 | `qml/CollectionsSheet.qml` | Create, rename and delete custom collections. |
@@ -41,6 +43,10 @@ Poster files are copied into the managed posters directory on save. Removing or 
 TMDB imports use a temporary poster file until Save. Discarding the draft removes that file. The imported TMDB ID is an optional field in `movies.json`; existing records remain valid. Credentials are saved per operating-system user under Qt's application configuration directory and are excluded from library backups. Requests use a personal v3 key or Read Access Token. The TMDB API's free use is limited to noncommercial projects under its terms.
 
 ## Rendering and cropping
+
+`preferences.py` validates persisted settings and the versioned `movieshelf-theme` JSON format. Theme files include their font family and text size. Older theme files containing only colors still import. Theme imports return a draft and cannot replace unrelated settings. `keyboard.py` defines the available commands, default combinations and reserved keys; it normalizes assignments and rejects duplicates. Main.qml dispatches shortcuts centrally, suspending library actions while a modal dialog is visible. The editor keeps Escape handling for unsaved changes.
+
+`Theme.qml` resolves custom palette colors and scales text sizes. Font changes use Qt's application font. `main.py` reads the application scale before creating QApplication, so this setting requires a restart. The bundled Medeo fonts and the system font list are available in Settings.
 
 The gallery uses a `GridView` with reusable delegates, so it creates visual cards around the visible area rather than constructing a widget for every film. Posters load asynchronously and use smooth texture filtering with mipmaps when reduced. The poster component applies a rounded mask through Qt Quick Effects.
 

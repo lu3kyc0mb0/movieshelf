@@ -7,8 +7,9 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QApplication, QMessageBox
 from qml_backend import ShelfBackend
+import preferences
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "2.0.0"
 RESOURCE_DIR = Path(__file__).resolve().parent
 FONT_DIR = RESOURCE_DIR / "assets" / "fonts" / "medeo"
 
@@ -30,6 +31,11 @@ def create_engine(backend):
 
 def main():
     os.environ.setdefault("QML_DISABLE_DISK_CACHE", "1")
+    try:
+        settings = preferences.load()
+    except ValueError:
+        settings = preferences.DEFAULTS
+    os.environ["QT_SCALE_FACTOR"] = str(settings["ui_scale"])
     app = QApplication(sys.argv)
     app.setApplicationName("MovieShelf")
     app.setOrganizationName("MovieShelf")
@@ -37,11 +43,13 @@ def main():
     app.setWindowIcon(QIcon(str(RESOURCE_DIR / "assets" / "icon.ico")))
     QQuickStyle.setStyle("Basic")
     family = load_ui_font()
+    if settings["font_family"] in QFontDatabase.families():
+        family = settings["font_family"]
     if family is None:
         families = QFontDatabase.families()
         family = next((name for name in ("Segoe UI Variable", "Segoe UI", "Noto Sans") if name in families), app.font().family())
     font = QFont(family)
-    font.setPixelSize(14)
+    font.setPixelSize(round(14 * settings["text_scale"]))
     app.setFont(font)
     backend = ShelfBackend()
     engine = create_engine(backend)

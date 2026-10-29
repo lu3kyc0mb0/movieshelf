@@ -16,10 +16,12 @@ Sheet {
         spacing: 17
         RowLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             ColumnLayout {
                 Layout.fillWidth: true
-                Text { text: Theme.tr("Find a movie on TMDB"); color: Theme.text; font.pixelSize: 25; font.weight: Font.DemiBold }
-                Text { text: Theme.tr("Choose a result, then check its details before saving."); color: Theme.secondary; font.pixelSize: 12 }
+                Layout.minimumWidth: 0
+                Text { text: Theme.tr("Find a movie on TMDB"); color: Theme.text; font.pixelSize: Theme.px(25); font.weight: Font.DemiBold; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                Text { text: Theme.tr("Choose a result, then check its details before saving."); color: Theme.secondary; font.pixelSize: Theme.px(12); Layout.fillWidth: true; wrapMode: Text.Wrap }
             }
             ActionButton { glyph: "close"; quiet: true; Accessible.name: Theme.tr("Cancel"); onClicked: root.close() }
         }
@@ -27,12 +29,12 @@ Sheet {
             visible: !shelf.tmdb.state.hasKey
             Layout.fillWidth: true
             spacing: 14
-            Text { text: Theme.tr("Use your own TMDB key"); color: Theme.text; font.pixelSize: 18; font.weight: Font.DemiBold }
+            Text { text: Theme.tr("Use your own TMDB key"); color: Theme.text; font.pixelSize: Theme.px(18); font.weight: Font.DemiBold }
             Text { text: Theme.tr("Your key is saved only in your user profile on this computer."); color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
             Field { id: credentialInput; objectName: "tmdbSetupKey"; Layout.fillWidth: true; echoMode: TextInput.Password; placeholderText: Theme.tr("API key or Read Access Token"); onAccepted: saveKey.clicked() }
             RowLayout {
                 Layout.fillWidth: true
-                ActionButton { text: Theme.tr("Get a free TMDB key"); quiet: true; onClicked: Qt.openUrlExternally("https://www.themoviedb.org/settings/api") }
+                ActionButton { text: Theme.tr("Get a free TMDB key"); onClicked: Qt.openUrlExternally("https://www.themoviedb.org/settings/api") }
                 Item { Layout.fillWidth: true }
                 ActionButton { id: saveKey; objectName: "tmdbSetupSave"; text: Theme.tr("Save key"); primary: true; onClicked: { if (shelf.tmdb.saveCredential(credentialInput.text)) { credentialInput.text = ""; queryInput.forceActiveFocus() } } }
             }
@@ -72,9 +74,9 @@ Sheet {
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 5
-                            Text { text: item.modelData.title; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 14; font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
-                            Text { text: item.modelData.year || Theme.tr("Release year unknown"); color: Theme.secondary; font.pixelSize: 12 }
-                            Text { text: item.modelData.description || ""; textFormat: Text.PlainText; color: Theme.secondary; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight }
+                            Text { text: item.modelData.title; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: Theme.px(14); font.weight: Font.DemiBold; Layout.fillWidth: true; elide: Text.ElideRight }
+                            Text { text: item.modelData.year || Theme.tr("Release year unknown"); color: Theme.secondary; font.pixelSize: Theme.px(12) }
+                            Text { text: item.modelData.description || ""; textFormat: Text.PlainText; color: Theme.secondary; font.pixelSize: Theme.px(11); Layout.fillWidth: true; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight }
                         }
                         Glyph { name: "arrow"; rotation: -90; width: 15; height: 15 }
                     }
@@ -84,15 +86,15 @@ Sheet {
             RowLayout {
                 Layout.fillWidth: true
                 BusyIndicator { visible: shelf.tmdb.state.searching || shelf.tmdb.state.importing; running: visible; Layout.preferredWidth: 28; Layout.preferredHeight: 28 }
-                Text { visible: shelf.tmdb.state.importing; text: Theme.tr("Loading movie details and poster…"); color: Theme.secondary; font.pixelSize: 12 }
-                Text { visible: queryInput.text.trim().length >= 2 && !shelf.tmdb.state.searching && !shelf.tmdb.state.importing && !shelf.tmdb.state.error && shelf.tmdb.state.results.length === 0; text: Theme.tr("No TMDB results found."); color: Theme.secondary; font.pixelSize: 12 }
+                Text { visible: shelf.tmdb.state.importing; text: Theme.tr("Loading movie details and poster…"); color: Theme.secondary; font.pixelSize: Theme.px(12) }
+                Text { visible: queryInput.text.trim().length >= 2 && !shelf.tmdb.state.searching && !shelf.tmdb.state.importing && !shelf.tmdb.state.error && shelf.tmdb.state.results.length === 0; text: Theme.tr("No TMDB results found."); color: Theme.secondary; font.pixelSize: Theme.px(12) }
                 Item { Layout.fillWidth: true }
             }
         }
         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }
         RowLayout {
             Layout.fillWidth: true
-            Text { text: Theme.tr("TMDB results need your own API key."); color: Theme.secondary; font.pixelSize: 11 }
+            Text { text: Theme.tr("TMDB results need your own API key."); color: Theme.secondary; font.pixelSize: Theme.px(11) }
             Item { Layout.fillWidth: true }
             ActionButton { text: Theme.tr("Enter manually"); enabled: !shelf.tmdb.state.importing; onClicked: { root.close(); shelf.editMovie(0) } }
         }

@@ -22,15 +22,15 @@ Sheet {
         spacing: 18
         RowLayout {
             Layout.fillWidth: true
-            Text { text: Theme.tr("Collection insights"); color: Theme.text; font.pixelSize: 25; font.weight: Font.DemiBold; Layout.fillWidth: true }
+            Text { text: Theme.tr("Collection insights"); color: Theme.text; font.pixelSize: Theme.px(25); font.weight: Font.DemiBold; Layout.fillWidth: true }
             ActionButton { glyph: "close"; quiet: true; Accessible.name: Theme.tr("Done"); onClicked: root.close() }
         }
         RowLayout {
             Layout.fillWidth: true
-            Text { text: Theme.tr("Collection"); color: Theme.secondary; font.pixelSize: 13 }
+            Text { text: Theme.tr("Collection"); color: Theme.secondary; font.pixelSize: Theme.px(13) }
             Choice { id: scopeChoice; objectName: "insightsScope"; Layout.preferredWidth: 250; model: root.scopes.map(item => item.name); onActivated: { root.scopeId = root.scopes[currentIndex].id; root.refresh() } }
             Item { Layout.fillWidth: true }
-            Text { text: Theme.tr("Based on your saved movies and watch dates"); color: Theme.secondary; font.pixelSize: 12 }
+            Text { text: Theme.tr("Based on your saved movies and watch dates"); color: Theme.secondary; font.pixelSize: Theme.px(12) }
         }
         ScrollView {
             Layout.fillWidth: true
@@ -60,8 +60,8 @@ Sheet {
                                 anchors.fill: parent
                                 anchors.margins: 13
                                 spacing: 4
-                                Text { text: modelData.value; color: Theme.text; font.pixelSize: 21; font.weight: Font.DemiBold }
-                                Text { text: Theme.tr(modelData.label); color: Theme.secondary; font.pixelSize: 11 }
+                                Text { text: modelData.value; color: Theme.text; font.pixelSize: Theme.px(21); font.weight: Font.DemiBold }
+                                Text { text: Theme.tr(modelData.label); color: Theme.secondary; font.pixelSize: Theme.px(11) }
                             }
                         }
                     }
@@ -69,8 +69,8 @@ Sheet {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
-                    Text { text: Theme.tr("Viewing trend · last 12 months"); color: Theme.text; font.pixelSize: 17; font.weight: Font.DemiBold }
-                    Text { text: Theme.tr("Each bar counts recorded watch dates. Gold shows repeat watches."); color: Theme.secondary; font.pixelSize: 12 }
+                    Text { text: Theme.tr("Viewing trend · last 12 months"); color: Theme.text; font.pixelSize: Theme.px(17); font.weight: Font.DemiBold }
+                    Text { text: Theme.tr("Each bar counts recorded watch dates. Gold shows repeat watches."); color: Theme.secondary; font.pixelSize: Theme.px(12) }
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 180
@@ -87,7 +87,7 @@ Sheet {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     spacing: 5
-                                    Text { text: modelData.count ? modelData.count : ""; color: Theme.text; font.pixelSize: 11; Layout.alignment: Qt.AlignHCenter }
+                                    Text { text: modelData.count ? modelData.count : ""; color: Theme.text; font.pixelSize: Theme.px(11); Layout.alignment: Qt.AlignHCenter }
                                     Item {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
@@ -108,18 +108,18 @@ Sheet {
                                             }
                                         }
                                     }
-                                    Text { text: modelData.label.slice(5) + "/" + modelData.label.slice(2, 4); color: Theme.secondary; font.pixelSize: 10; Layout.alignment: Qt.AlignHCenter }
+                                    Text { text: modelData.label.slice(5) + "/" + modelData.label.slice(2, 4); color: Theme.secondary; font.pixelSize: Theme.px(10); Layout.alignment: Qt.AlignHCenter }
                                 }
                             }
                         }
                     }
-                    Text { visible: root.report.undatedWatched > 0; text: Theme.tr("Watched films without a recorded date: ") + root.report.undatedWatched; color: Theme.secondary; font.pixelSize: 12 }
+                    Text { visible: root.report.undatedWatched > 0; text: Theme.tr("Watched films without a recorded date: ") + root.report.undatedWatched; color: Theme.secondary; font.pixelSize: Theme.px(12) }
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
-                    Text { text: Theme.tr("Your rating distribution"); color: Theme.text; font.pixelSize: 17; font.weight: Font.DemiBold }
-                    Text { text: Theme.tr("Rated films: ") + root.report.rated + "  ·  " + Theme.tr("Unrated films: ") + root.report.unrated; color: Theme.secondary; font.pixelSize: 12 }
+                    Text { text: Theme.tr("Your rating distribution"); color: Theme.text; font.pixelSize: Theme.px(17); font.weight: Font.DemiBold }
+                    Text { text: Theme.tr("Rated films: ") + root.report.rated + "  ·  " + Theme.tr("Unrated films: ") + root.report.unrated; color: Theme.secondary; font.pixelSize: Theme.px(12) }
                     Repeater {
                         model: root.report.ratings
                         delegate: RowLayout {
@@ -127,7 +127,7 @@ Sheet {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 24
                             spacing: 12
-                            Text { text: modelData.rating; color: Theme.secondary; font.pixelSize: 12; Layout.preferredWidth: 18; horizontalAlignment: Text.AlignRight }
+                            Text { text: modelData.rating; color: Theme.secondary; font.pixelSize: Theme.px(12); Layout.preferredWidth: 18; horizontalAlignment: Text.AlignRight }
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 13
@@ -141,7 +141,7 @@ Sheet {
                                     Behavior on width { NumberAnimation { duration: Theme.duration; easing.type: Easing.OutCubic } }
                                 }
                             }
-                            Text { text: modelData.count; color: Theme.text; font.pixelSize: 12; Layout.preferredWidth: 24; horizontalAlignment: Text.AlignRight }
+                            Text { text: modelData.count; color: Theme.text; font.pixelSize: Theme.px(12); Layout.preferredWidth: 24; horizontalAlignment: Text.AlignRight }
                         }
                     }
                 }

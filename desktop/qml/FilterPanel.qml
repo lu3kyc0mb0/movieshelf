@@ -14,7 +14,7 @@ Rectangle {
         property string filterKey
         property int maximum: 2100
         spacing: 6
-        Text { text: Theme.tr(parent.caption); color: Theme.secondary; font.pixelSize: 11 }
+        Text { text: Theme.tr(parent.caption); color: Theme.secondary; font.pixelSize: Theme.px(11) }
         Field {
             Layout.fillWidth: true
             Layout.minimumWidth: 70

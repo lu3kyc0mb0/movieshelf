@@ -16,7 +16,7 @@ from motion import fade_in
 from panels import CollectionManager, SearchDialog, SettingsDialog, MoviePreview, search_icon
 from i18n import film_count, set_language, t
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "2.0.0"
 
 class MovieCard(QFrame):
     def __init__(self, movie, size, open_movie):

@@ -2,12 +2,12 @@
 
 - [ ] Add a backup browser with a preview and selective restore.
 - [ ] Let users export selected films and reviews to a shareable format.
-- [ ] Offer more layout and accessibility options, including adjustable text size.
 - [ ] Provide native macOS and Linux application packages.
 - [ ] Add an installer and an optional update checker for future releases.
 
 # Completed Ideas
 
+- [X] Offer more layout and accessibility options, including adjustable text size, custom themes, font and application scaling, and configurable keyboard shortcuts.
 - [X] Add Kazakh* and Russian interface localization.
 - [X] Add advanced filters for year, rating, watch status, and favorites.
 - [X] Support dragging images onto the poster editor and previewing the final crop at different card sizes.

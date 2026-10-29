@@ -6,8 +6,9 @@ import zipfile
 from datetime import date
 from pathlib import Path
 from PySide6.QtCore import QAbstractListModel, QModelIndex, QObject, Property, Qt, QUrl, Signal, Slot
-from PySide6.QtGui import QImageReader
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtGui import QImageReader, QFontDatabase, QFont, QKeySequence, QColor
+from PySide6.QtWidgets import QFileDialog, QColorDialog, QApplication
+import keyboard
 import movie_store as store
 import preferences
 from insights import build_insights
@@ -54,6 +55,7 @@ class ShelfBackend(QObject):
     movieSaved = Signal(bool)
     errorOccurred = Signal(str)
     notified = Signal(str)
+    restartRequired = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -90,6 +92,74 @@ class ShelfBackend(QObject):
     @Slot(str, result="QVariantMap")
     def collectionInsights(self, collection_id):
         return build_insights(self.movies, collection_id)
+
+    @Property("QStringList", constant=True)
+    def fontFamilies(self):
+        return sorted(QFontDatabase.families(), key=str.casefold)
+
+    @Property("QVariantList", constant=True)
+    def keyboardActions(self):
+        return keyboard.ACTIONS
+
+    @Slot(int, int, result=str)
+    def keySequence(self, key, modifiers):
+        if key in (Qt.Key.Key_Control, Qt.Key.Key_Shift, Qt.Key.Key_Alt, Qt.Key.Key_Meta):
+            return ""
+        return QKeySequence(key | modifiers).toString(QKeySequence.SequenceFormat.PortableText)
+
+    @Slot("QVariantMap", result=str)
+    def shortcutError(self, values):
+        try:
+            keyboard.validate(values)
+        except ValueError as error:
+            return t(str(error))
+        return ""
+
+    @Slot(str, result="QVariantMap")
+    def themePreset(self, name):
+        mode = "light" if name == "light" else "dark"
+        colors = dict(preferences.PALETTES[mode])
+        if name == "contrast":
+            colors.update(background="#000000", sidebar="#080808", surface="#101010", elevated="#202020", text="#ffffff", secondary="#e0e0e0", line="#a0a0a0", accent="#69b5ff", onAccent="#000000")
+        return {"theme": mode, "theme_style": name, "colors": colors, "theme_name": ""}
+
+    @Slot("QVariantMap", result=str)
+    def themeError(self, values):
+        try:
+            preferences.theme_document(values)
+        except (TypeError, ValueError) as error:
+            return t(str(error))
+        return ""
+
+    @Slot(str, result=str)
+    def chooseThemeColor(self, current):
+        color = QColorDialog.getColor(QColor(current), None, t("Choose color"))
+        return color.name() if color.isValid() else current
+
+    @Slot(result="QVariantMap")
+    def importTheme(self):
+        filename, _ = QFileDialog.getOpenFileName(None, t("Import theme"), "", "MovieShelf theme (*.json)")
+        if not filename:
+            return {}
+        try:
+            return preferences.read_theme(Path(filename))
+        except (OSError, UnicodeError, ValueError) as error:
+            self.errorOccurred.emit(t(str(error)))
+            return {}
+
+    @Slot("QVariantMap")
+    def exportTheme(self, values):
+        try:
+            document = preferences.theme_document(values)
+            filename, _ = QFileDialog.getSaveFileName(None, t("Export theme"), "MovieShelf-theme.json", "MovieShelf theme (*.json)")
+            if filename:
+                target = Path(filename).resolve()
+                protected = {Path(value).resolve() for value in (store.MOVIES_FILE, store.COLLECTIONS_FILE, store.COUNTER_FILE, store.LOCK_FILE, store.BASE_DIR / "settings.json")}
+                if target in protected:
+                    raise ValueError("Choose a theme file outside the library files.")
+                store._atomic_write(target, json.dumps(document, ensure_ascii=False, indent=2) + "\n")
+        except (OSError, ValueError) as error:
+            self.errorOccurred.emit(t(str(error)))
 
     @Property(QObject, constant=True)
     def tmdb(self):
@@ -451,22 +521,26 @@ class ShelfBackend(QObject):
 
     @Slot("QVariantMap", result=bool)
     def saveSettings(self, values):
+        previous = self._state["preferences"]
         result = dict(self._state["preferences"])
         result.update(values)
-        if result.get("theme") not in ("light", "dark") or result.get("language") not in ("en", "ru", "kk"):
-            return False
-        if any(type(result.get(k)) is not bool for k in ("animations", "show_statistics")):
-            return False
-        result["card_size"] = max(155, min(245, int(result["card_size"])))
         try:
+            result = preferences.validate(result)
             preferences.save(result)
-        except OSError as error:
-            self.errorOccurred.emit(str(error))
+        except (OSError, ValueError) as error:
+            self.errorOccurred.emit(t(str(error)))
             return False
         self._state["preferences"] = result
+        app = QApplication.instance()
+        if app is not None:
+            font = QFont(result["font_family"] or "Medeo Sans")
+            font.setPixelSize(round(14 * result["text_scale"]))
+            app.setFont(font)
         set_language(result["language"])
         self.refresh()
         self.notified.emit(t("Settings saved."))
+        if any(result[key] != previous[key] for key in ("font_family", "ui_scale")):
+            self.restartRequired.emit()
         return True
 
     @Slot(int)

@@ -45,7 +45,7 @@ Item {
             spacing: 14
             visible: !root.ready
             Glyph { name: "image"; width: 36; height: 36; anchors.horizontalCenter: parent.horizontalCenter }
-            Text { text: Theme.tr("NO ARTWORK\nAdd your own poster"); color: Theme.secondary; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter }
+            Text { text: Theme.tr("NO ARTWORK\nAdd your own poster"); color: Theme.secondary; font.pixelSize: Theme.px(12); horizontalAlignment: Text.AlignHCenter }
         }
         Rectangle { anchors.fill: parent; color: "#55007aff"; visible: drop.containsDrag }
     }

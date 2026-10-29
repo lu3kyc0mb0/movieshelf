@@ -21,9 +21,9 @@ Sheet {
         if (closeApplication) quitRequested()
     }
     onClosed: shelf.discardDraft()
-    Shortcut { sequence: "Ctrl+S"; enabled: root.opened; onActivated: shelf.saveMovie(false) }
+    readonly property bool keyboardSaveAllowed: root.opened && !unsaved.visible && !deleteConfirm.visible
     Shortcut { sequence: "Escape"; enabled: root.opened && !unsaved.opened && !deleteConfirm.opened; onActivated: root.requestClose() }
-    component Caption: Text { color: Theme.secondary; font.pixelSize: 12; font.weight: Font.Medium }
+    component Caption: Text { color: Theme.secondary; font.pixelSize: Theme.px(12); font.weight: Font.Medium }
     ColumnLayout {
         anchors.fill: parent
         spacing: 20
@@ -31,35 +31,17 @@ Sheet {
             Layout.fillWidth: true
             ColumnLayout {
                 spacing: 4
-                Text { text: Theme.tr(root.movie.id ? "Edit movie" : "Add a movie"); color: Theme.text; font.pixelSize: 26; font.weight: Font.DemiBold; font.letterSpacing: -0.5 }
+                Text { text: Theme.tr(root.movie.id ? "Edit movie" : "Add a movie"); color: Theme.text; font.pixelSize: Theme.px(26); font.weight: Font.DemiBold; font.letterSpacing: -0.5 }
                 Caption { text: (root.movie.id ? "ID #" + root.movie.id : Theme.tr("ID assigned on save")) + (shelf.dirty ? "  ·  " + Theme.tr("Unsaved changes") : "") }
             }
             Item { Layout.fillWidth: true }
             ActionButton { glyph: "close"; quiet: true; Accessible.name: Theme.tr("Cancel"); onClicked: root.requestClose() }
         }
-        Rectangle {
+        SegmentedTabs {
             Layout.fillWidth: true
-            height: 43
-            radius: 11
-            color: Theme.elevated
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 4
-                spacing: 3
-                Repeater {
-                    model: ["Overview", "Movie Review", "Viewing history", "Organization", "Poster studio"]
-                    delegate: Button {
-                        id: tabButton
-                        required property string modelData
-                        required property int index
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        onClicked: root.tab = index
-                        contentItem: Text { text: Theme.tr(tabButton.modelData); color: root.tab === tabButton.index ? Theme.text : Theme.secondary; font.pixelSize: 13; font.weight: root.tab === tabButton.index ? Font.DemiBold : Font.Normal; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                        background: Rectangle { radius: 8; color: root.tab === tabButton.index ? Theme.surface : "transparent"; border.width: tabButton.activeFocus ? 1 : 0; border.color: Theme.accent; Behavior on color { ColorAnimation { duration: Theme.duration } } }
-                    }
-                }
-            }
+            model: [Theme.tr("Overview"), Theme.tr("Movie Review"), Theme.tr("Viewing history"), Theme.tr("Organization"), Theme.tr("Poster studio")]
+            currentIndex: root.tab
+            onActivated: index => root.tab = index
         }
         StackLayout {
             currentIndex: root.tab
@@ -80,7 +62,7 @@ Sheet {
                         spacing: 12
                         Poster { Layout.preferredWidth: 210; Layout.preferredHeight: 315; source: root.movie.posterUrl || ""; crop: root.movie.poster_crop || ({zoom: 1, x: 0, y: 0, mode: "fill"}); editable: true; onDropped: url => shelf.loadPoster(url); onRepositioned: (x, y) => { shelf.setCrop("x", x); shelf.setCrop("y", y) } }
                         ActionButton { text: Theme.tr("Choose poster…"); glyph: "image"; Layout.fillWidth: true; onClicked: shelf.choosePoster() }
-                        Caption { text: Theme.tr("Drop an image here"); Layout.alignment: Qt.AlignHCenter; font.pixelSize: 11 }
+                        Caption { text: Theme.tr("Drop an image here"); Layout.alignment: Qt.AlignHCenter; font.pixelSize: Theme.px(11) }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
@@ -130,7 +112,7 @@ Sheet {
                     }
                     ActionButton { glyph: "close"; quiet: true; Accessible.name: Theme.tr("Not rated"); onClicked: shelf.updateDraft("rating", 0) }
                 }
-                Text { text: root.movie.rating ? "★ " + root.movie.rating + " / 10" : Theme.tr("Not rated"); color: Theme.gold; font.pixelSize: 20; font.weight: Font.DemiBold }
+                Text { text: root.movie.rating ? "★ " + root.movie.rating + " / 10" : Theme.tr("Not rated"); color: Theme.gold; font.pixelSize: Theme.px(20); font.weight: Font.DemiBold }
                 Caption { text: Theme.tr("My review") }
                 NotesField { objectName: "reviewInput"; Layout.fillWidth: true; Layout.fillHeight: true; text: root.movie.review || ""; placeholderText: Theme.tr("Your personal review. What worked? How did it make you feel? Would you watch it again?"); onEdited: value => { if (root.opened) shelf.updateDraft("review", value) } }
             }
@@ -140,7 +122,7 @@ Sheet {
                 ColumnLayout {
                     width: parent.width
                     spacing: 16
-                    Text { text: Theme.tr("Viewing history"); color: Theme.text; font.pixelSize: 20; font.weight: Font.DemiBold }
+                    Text { text: Theme.tr("Viewing history"); color: Theme.text; font.pixelSize: Theme.px(20); font.weight: Font.DemiBold }
                     Text { text: Theme.tr("Record every time you watched this movie, including rewatches."); color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                     RowLayout {
                         Layout.fillWidth: true
@@ -148,9 +130,9 @@ Sheet {
                         ActionButton { id: addWatchDateButton; objectName: "addWatchDateButton"; text: Theme.tr("Add watch date"); primary: true; onClicked: { if (shelf.addWatchDate(watchDateInput.text)) watchDateInput.text = shelf.todayText() } }
                         Item { Layout.fillWidth: true }
                     }
-                    Text { text: Theme.tr("Use YYYY-MM-DD. Add the same date twice if you watched twice that day."); color: Theme.secondary; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                    Text { text: Theme.tr("Use YYYY-MM-DD. Add the same date twice if you watched twice that day."); color: Theme.secondary; font.pixelSize: Theme.px(12); wrapMode: Text.WordWrap; Layout.fillWidth: true }
                     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }
-                    Text { visible: !root.movie.watch_dates || root.movie.watch_dates.length === 0; text: Theme.tr("No watch dates recorded yet."); color: Theme.secondary; font.pixelSize: 14 }
+                    Text { visible: !root.movie.watch_dates || root.movie.watch_dates.length === 0; text: Theme.tr("No watch dates recorded yet."); color: Theme.secondary; font.pixelSize: Theme.px(14) }
                     Repeater {
                         model: root.movie.watch_dates || []
                         delegate: RowLayout {
@@ -158,9 +140,9 @@ Sheet {
                             required property int index
                             Layout.fillWidth: true
                             Layout.preferredHeight: 45
-                            Text { text: (index + 1) + "."; color: Theme.secondary; Layout.preferredWidth: 30; font.pixelSize: 13 }
-                            Text { text: modelData; color: Theme.text; font.pixelSize: 14; Layout.preferredWidth: 130 }
-                            Text { text: Theme.tr(index === 0 ? "First watch" : "Rewatch"); color: Theme.accent; font.pixelSize: 12 }
+                            Text { text: (index + 1) + "."; color: Theme.secondary; Layout.preferredWidth: 30; font.pixelSize: Theme.px(13) }
+                            Text { text: modelData; color: Theme.text; font.pixelSize: Theme.px(14); Layout.preferredWidth: 130 }
+                            Text { text: Theme.tr(index === 0 ? "First watch" : "Rewatch"); color: Theme.accent; font.pixelSize: Theme.px(12) }
                             Item { Layout.fillWidth: true }
                             ActionButton { glyph: "trash"; quiet: true; destructive: true; Accessible.name: Theme.tr("Remove watch date"); onClicked: shelf.removeWatchDate(index) }
                         }
@@ -188,7 +170,7 @@ Sheet {
                             onToggled: shelf.selectCollection(modelData.id, checked)
                         }
                     }
-                    Text { visible: shelf.state.collections.length === 0; text: Theme.tr("Create collections from the sidebar."); color: Theme.secondary; font.pixelSize: 13 }
+                    Text { visible: shelf.state.collections.length === 0; text: Theme.tr("Create collections from the sidebar."); color: Theme.secondary; font.pixelSize: Theme.px(13) }
                 }
             }
             ScrollView {
@@ -214,7 +196,7 @@ Sheet {
                             Layout.fillWidth: true
                             spacing: 10
                             Caption { text: Theme.tr("Poster position") }
-                            Text { text: Theme.tr("Drag the poster to reposition it.\nAdjust the scale to frame your favorite detail."); color: Theme.secondary; font.pixelSize: 13; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                            Text { text: Theme.tr("Drag the poster to reposition it.\nAdjust the scale to frame your favorite detail."); color: Theme.secondary; font.pixelSize: Theme.px(13); wrapMode: Text.WordWrap; Layout.fillWidth: true }
                             ActionButton { text: Theme.tr("Choose poster…"); glyph: "image"; onClicked: shelf.choosePoster() }
                             Choice { Layout.fillWidth: true; model: [Theme.tr("Fill the frame"), Theme.tr("Show full image")]; currentIndex: root.movie.poster_crop && root.movie.poster_crop.mode === "fit" ? 1 : 0; onActivated: shelf.setCropMode(currentIndex ? "fit" : "fill") }
                             Repeater {
@@ -271,7 +253,7 @@ Sheet {
         ColumnLayout {
             anchors.fill: parent
             spacing: 18
-            Text { text: Theme.tr("Unsaved changes"); font.pixelSize: 22; font.weight: Font.DemiBold; color: Theme.text }
+            Text { text: Theme.tr("Unsaved changes"); font.pixelSize: Theme.px(22); font.weight: Font.DemiBold; color: Theme.text }
             Text { text: Theme.tr("Save your changes before closing?"); color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
             RowLayout {
                 Layout.fillWidth: true
@@ -290,7 +272,7 @@ Sheet {
         ColumnLayout {
             anchors.fill: parent
             spacing: 18
-            Text { text: Theme.tr("Delete movie"); color: Theme.text; font.pixelSize: 22; font.weight: Font.DemiBold }
+            Text { text: Theme.tr("Delete movie"); color: Theme.text; font.pixelSize: Theme.px(22); font.weight: Font.DemiBold }
             Text { text: Theme.tr("Delete “{title}” and its review?").replace("{title}", root.movie.title || ""); color: Theme.secondary; wrapMode: Text.WordWrap; Layout.fillWidth: true }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
